@@ -7,7 +7,7 @@ export function GeneratorButton() {
   const generatorCount = useGameStore((state) => state.generatorCount);
   const buyGenerator = useGameStore((state) => state.buyGenerator);
 
-  const cost = calcGeneratorCost(generatorCount);
+  const cost = calcGeneratorCost();
   const canAfford = points >= cost;
 
   return (

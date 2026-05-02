@@ -1,3 +1,4 @@
+import { AutoBuyButton } from "@/components/AutoBuyButton";
 import { GeneratorButton } from "@/components/GeneratorButton";
 import { PointsDisplay } from "@/components/PointsDisplay";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -12,6 +13,7 @@ function App() {
       <section className="shop">
         <h2 className="shop-title">Магазин</h2>
         <GeneratorButton />
+        <AutoBuyButton />
       </section>
     </div>
   );

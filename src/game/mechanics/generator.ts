@@ -1,11 +1,7 @@
-import {
-  GENERATOR_BASE_PPS,
-  GENERATOR_BASE_PRICE,
-  GENERATOR_PRICE_MULTIPLIER,
-} from "@/constants/game";
+import { GENERATOR_BASE_PPS, GENERATOR_BASE_PRICE } from "@/constants/game";
 
-export function calcGeneratorCost(count: number): number {
-  return Math.floor(GENERATOR_BASE_PRICE * GENERATOR_PRICE_MULTIPLIER ** count);
+export function calcGeneratorCost(): number {
+  return GENERATOR_BASE_PRICE;
 }
 
 export function calcPointsPerSecond(count: number): number {

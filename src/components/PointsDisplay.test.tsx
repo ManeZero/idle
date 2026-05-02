@@ -5,7 +5,12 @@ import { PointsDisplay } from "./PointsDisplay";
 
 beforeEach(() => {
   localStorage.clear();
-  useGameStore.setState({ points: 0, generatorCount: 0 });
+  useGameStore.setState({
+    points: 0,
+    generatorCount: 0,
+    autoBuyUnlocked: false,
+    autoBuyEnabled: false,
+  });
 });
 
 describe("PointsDisplay", () => {

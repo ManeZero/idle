@@ -1,21 +1,8 @@
 import { calcGeneratorCost, calcPointsPerSecond } from "./generator";
 
 describe("calcGeneratorCost", () => {
-  it("returns base price when none owned", () => {
-    expect(calcGeneratorCost(0)).toBe(100);
-  });
-
-  it("returns 120 when 1 owned", () => {
-    expect(calcGeneratorCost(1)).toBe(120);
-  });
-
-  it("returns 144 when 2 owned", () => {
-    expect(calcGeneratorCost(2)).toBe(144);
-  });
-
-  it("increases with each purchase", () => {
-    expect(calcGeneratorCost(1)).toBeGreaterThan(calcGeneratorCost(0));
-    expect(calcGeneratorCost(2)).toBeGreaterThan(calcGeneratorCost(1));
+  it("always returns the base price", () => {
+    expect(calcGeneratorCost()).toBe(100);
   });
 });
 
