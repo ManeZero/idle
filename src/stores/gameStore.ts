@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { AUTO_BUY_COST, GENERATOR_BASE_PPS, STORAGE_KEY } from "@/constants/game";
-import { calcGeneratorCost } from "@/game/mechanics/generator";
+import { calcAutoBuyUpgradeCost, calcGeneratorCost } from "@/game/mechanics/generator";
 import type { GameActions, GameState } from "@/types/game";
 
 function readFromStorage(): Partial<GameState> {
@@ -23,25 +23,31 @@ export const useGameStore = create<GameState & GameActions>()(
       generatorCount: 0,
       autoBuyUnlocked: false,
       autoBuyEnabled: false,
+      autoBuyUpgradeCount: 0,
+      paused: false,
 
       tick(deltaSeconds) {
+        if (get().paused) return;
         const saved = readFromStorage();
         set((state) => {
           const points = saved.points ?? state.points;
           const count = saved.generatorCount ?? state.generatorCount;
           const unlocked = saved.autoBuyUnlocked ?? state.autoBuyUnlocked;
           const enabled = saved.autoBuyEnabled ?? state.autoBuyEnabled;
+          const upgradeCount = saved.autoBuyUpgradeCount ?? state.autoBuyUpgradeCount;
           state.points = points + count * GENERATOR_BASE_PPS * deltaSeconds;
           state.generatorCount = count;
           state.autoBuyUnlocked = unlocked;
           state.autoBuyEnabled = enabled;
+          state.autoBuyUpgradeCount = upgradeCount;
         });
-        const { points, autoBuyUnlocked, autoBuyEnabled } = get();
-        const cost = calcGeneratorCost();
-        if (autoBuyUnlocked && autoBuyEnabled && points >= cost) {
+        const { points, autoBuyUnlocked, autoBuyEnabled, autoBuyUpgradeCount } = get();
+        const amount = 1 + autoBuyUpgradeCount;
+        const totalCost = amount * calcGeneratorCost();
+        if (autoBuyUnlocked && autoBuyEnabled && points >= totalCost) {
           set((state) => {
-            state.points -= cost;
-            state.generatorCount += 1;
+            state.points -= totalCost;
+            state.generatorCount += amount;
           });
         }
       },
@@ -71,6 +77,22 @@ export const useGameStore = create<GameState & GameActions>()(
           state.autoBuyEnabled = !state.autoBuyEnabled;
         });
       },
+
+      buyAutoBuyUpgrade() {
+        const { points, autoBuyUpgradeCount } = get();
+        const cost = calcAutoBuyUpgradeCost(autoBuyUpgradeCount);
+        if (points < cost) return;
+        set((state) => {
+          state.points -= cost;
+          state.autoBuyUpgradeCount += 1;
+        });
+      },
+
+      togglePause() {
+        set((state) => {
+          state.paused = !state.paused;
+        });
+      },
     })),
     {
       name: STORAGE_KEY,
@@ -79,6 +101,7 @@ export const useGameStore = create<GameState & GameActions>()(
         generatorCount: state.generatorCount,
         autoBuyUnlocked: state.autoBuyUnlocked,
         autoBuyEnabled: state.autoBuyEnabled,
+        autoBuyUpgradeCount: state.autoBuyUpgradeCount,
       }),
     },
   ),

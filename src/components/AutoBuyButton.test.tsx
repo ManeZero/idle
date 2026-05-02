@@ -11,6 +11,8 @@ const reset = (overrides = {}) => {
     generatorCount: 0,
     autoBuyUnlocked: false,
     autoBuyEnabled: false,
+    autoBuyUpgradeCount: 0,
+    paused: false,
     ...overrides,
   });
 };
@@ -55,5 +57,17 @@ describe("AutoBuyButton", () => {
     render(<AutoBuyButton />);
     await userEvent.click(screen.getByRole("button"));
     expect(useGameStore.getState().autoBuyEnabled).toBe(false);
+  });
+
+  it("shows correct amount per tick with 0 upgrades", () => {
+    reset({ autoBuyUnlocked: true, autoBuyEnabled: true, autoBuyUpgradeCount: 0 });
+    render(<AutoBuyButton />);
+    expect(screen.getByText("Покупает 1 за раз")).toBeInTheDocument();
+  });
+
+  it("shows correct amount per tick with 2 upgrades", () => {
+    reset({ autoBuyUnlocked: true, autoBuyEnabled: true, autoBuyUpgradeCount: 2 });
+    render(<AutoBuyButton />);
+    expect(screen.getByText("Покупает 3 за раз")).toBeInTheDocument();
   });
 });
