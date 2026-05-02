@@ -15,9 +15,6 @@
     "lineWidth": 100,
     "lineEnding": "lf"
   },
-  "organizeImports": {
-    "enabled": true
-  },
   "assist": {
     "enabled": true,
     "actions": {
