@@ -1,17 +1,33 @@
+export interface OilStation {
+  id: number;
+  oilRemaining: number;
+  capacity: number;
+  energyConsumption: number;
+  enabled: boolean;
+  purchasePrice: number;
+}
+
+export interface EnergyContract {
+  id: number;
+  energyProvided: number;
+  timeRemaining: number;
+}
+
 export interface GameState {
-  points: number;
-  generatorCount: number;
-  autoBuyUnlocked: boolean;
-  autoBuyEnabled: boolean;
-  autoBuyUpgradeCount: number;
+  currency: number;
+  oil: number;
+  stations: OilStation[];
+  contracts: EnergyContract[];
+  nextId: number;
   paused: boolean;
 }
 
 export interface GameActions {
   tick: (deltaSeconds: number) => void;
-  buyGenerator: () => void;
-  buyAutoBuy: () => void;
-  toggleAutoBuy: () => void;
-  buyAutoBuyUpgrade: () => void;
+  buyOilStation: () => void;
+  sellOilStation: (id: number) => void;
+  toggleOilStation: (id: number) => void;
+  buyContract: () => void;
+  sellOil: (fraction: number) => void;
   togglePause: () => void;
 }
