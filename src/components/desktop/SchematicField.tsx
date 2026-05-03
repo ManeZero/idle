@@ -4,18 +4,38 @@ import { useGameStore } from "@/stores/gameStore";
 import type { OilStation } from "@/types/game";
 import { Pumpjack } from "../Pumpjack";
 
-// Фиксированные позиции 6 слотов на чертеже 880×632.
-// Заполняются по id станции (1..6); пустые показываются как "СЛОТ N".
+// Размер чертежа: уменьшил viewBox чтобы внутренние объекты автоматически
+// масштабировались крупнее в реальном контейнере. Aspect ~1.4 — близко
+// к bp-desktop__field, минимум "letterbox" пустоты по бокам.
+const VIEW_W = 700;
+const VIEW_H = 500;
+
+// Геометрия станции
+const ST_R = 42; // радиус основного круга станции (был 28)
+const ST_RING_R = 50; // selection ring (выделение)
+const ST_EMPTY_R = ST_R + 4; // empty-pulse — ближе к станции, чтобы не задевать текст «ИССЯКЛА»
+const ST_PROG_R = 34; // радиус progress-arc
+const ST_PROG_C = 2 * Math.PI * ST_PROG_R; // длина окружности
+
+// Узел сбора и резервуар
+const HUB_HALF = 32; // полуширина квадрата hub'а (была 26)
+const TANK_HALF_W = 44; // полуширина резервуара
+const TANK_HALF_H = 56; // полувысота
+const TANK_W = TANK_HALF_W * 2;
+const TANK_H = TANK_HALF_H * 2;
+
+// Позиции 6 слотов на чертеже VIEW_W × VIEW_H.
+// Узел сбора — центр, резервуар — справа, станции вокруг по дуге.
+const HUB = { x: 320, y: 260 };
+const TANK = { x: 590, y: 260 };
 const SLOT_POSITIONS = [
-  { x: 180, y: 270 },
-  { x: 360, y: 200 },
-  { x: 280, y: 450 },
-  { x: 530, y: 480 },
-  { x: 600, y: 150 },
-  { x: 700, y: 510 },
+  { x: 130, y: 200 }, // 1: верх-лево
+  { x: 280, y: 90 }, // 2: верх
+  { x: 200, y: 380 }, // 3: низ-лево
+  { x: 420, y: 410 }, // 4: низ
+  { x: 470, y: 100 }, // 5: верх-право
+  { x: 580, y: 410 }, // 6: низ-право (R6)
 ];
-const HUB = { x: 400, y: 340 };
-const TANK = { x: 740, y: 340 };
 
 interface Props {
   selectedId: number | null;
@@ -29,16 +49,15 @@ export function SchematicField({ selectedId, onSelect }: Props) {
   const mods = getResearchModifiers(completedResearch);
   const tankCapacity = 10_000;
   const fallback = { x: 0, y: 0 };
-  const fillStations = stations.map((s, i) => ({
+  const placed = stations.map((s, i) => ({
     station: s,
-    slot: i,
     pos: SLOT_POSITIONS[i] ?? fallback,
     rate: calcOilProductionRate(s, mods),
   }));
 
   return (
     <svg
-      viewBox="0 0 880 632"
+      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       preserveAspectRatio="xMidYMid meet"
       width="100%"
       height="100%"
@@ -47,7 +66,7 @@ export function SchematicField({ selectedId, onSelect }: Props) {
     >
       <title>Схема нефтяного поля Blackwell</title>
       <ReservoirContours />
-      {fillStations
+      {placed
         .filter((f) => f.station.enabled)
         .map((f) => (
           <PipeStationToHub key={`pipe-${f.station.id}`} x={f.pos.x} y={f.pos.y} />
@@ -68,7 +87,7 @@ export function SchematicField({ selectedId, onSelect }: Props) {
           />
         );
       })}
-      {fillStations.map((f) => (
+      {placed.map((f) => (
         <StationNode
           key={f.station.id}
           station={f.station}
@@ -89,8 +108,8 @@ function ReservoirContours() {
       <ellipse
         cx={HUB.x}
         cy={HUB.y}
-        rx="320"
-        ry="260"
+        rx="260"
+        ry="200"
         fill="none"
         stroke="rgba(244,180,84,0.25)"
         strokeWidth="0.6"
@@ -99,8 +118,8 @@ function ReservoirContours() {
       <ellipse
         cx={HUB.x}
         cy={HUB.y}
-        rx="220"
-        ry="180"
+        rx="180"
+        ry="140"
         fill="none"
         stroke="rgba(244,180,84,0.3)"
         strokeWidth="0.6"
@@ -109,8 +128,8 @@ function ReservoirContours() {
       <ellipse
         cx={HUB.x}
         cy={HUB.y}
-        rx="120"
-        ry="100"
+        rx="100"
+        ry="80"
         fill="none"
         stroke="rgba(244,180,84,0.5)"
         strokeWidth="0.6"
@@ -126,40 +145,13 @@ function PipeStationToHub({ x, y }: { x: number; y: number }) {
   const d = Math.hypot(dx, dy);
   const ux = dx / d;
   const uy = dy / d;
-  const x1 = x + ux * 28;
-  const y1 = y + uy * 28;
-  const x2 = HUB.x - ux * 26;
-  const y2 = HUB.y - uy * 26;
+  const x1 = x + ux * ST_R;
+  const y1 = y + uy * ST_R;
+  const x2 = HUB.x - ux * HUB_HALF;
+  const y2 = HUB.y - uy * HUB_HALF;
   return (
     <g>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(110,195,230,0.55)" strokeWidth="2.5" />
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--bp-bg)" strokeWidth="1" />
-      <line
-        className="flow-line"
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke="var(--bp-amber)"
-        strokeWidth="1.4"
-      />
-    </g>
-  );
-}
-
-function PipeHubToTank() {
-  const dx = TANK.x - HUB.x;
-  const dy = TANK.y - HUB.y;
-  const d = Math.hypot(dx, dy);
-  const ux = dx / d;
-  const uy = dy / d;
-  const x1 = HUB.x + ux * 26;
-  const y1 = HUB.y + uy * 26;
-  const x2 = TANK.x - ux * 32;
-  const y2 = TANK.y - uy * 32;
-  return (
-    <g>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(110,195,230,0.7)" strokeWidth="3.5" />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(110,195,230,0.55)" strokeWidth="3" />
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--bp-bg)" strokeWidth="1.2" />
       <line
         className="flow-line"
@@ -174,45 +166,73 @@ function PipeHubToTank() {
   );
 }
 
+function PipeHubToTank() {
+  const dx = TANK.x - HUB.x;
+  const dy = TANK.y - HUB.y;
+  const d = Math.hypot(dx, dy);
+  const ux = dx / d;
+  const uy = dy / d;
+  const x1 = HUB.x + ux * HUB_HALF;
+  const y1 = HUB.y + uy * HUB_HALF;
+  const x2 = TANK.x - ux * TANK_HALF_W;
+  const y2 = TANK.y - uy * TANK_HALF_W;
+  return (
+    <g>
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(110,195,230,0.7)" strokeWidth="4" />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--bp-bg)" strokeWidth="1.4" />
+      <line
+        className="flow-line"
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke="var(--bp-amber)"
+        strokeWidth="1.8"
+      />
+    </g>
+  );
+}
+
 function Hub() {
+  const inner = HUB_HALF - 4;
   return (
     <g transform={`translate(${HUB.x} ${HUB.y})`}>
       <rect
-        x="-26"
-        y="-26"
-        width="52"
-        height="52"
+        x={-HUB_HALF}
+        y={-HUB_HALF}
+        width={HUB_HALF * 2}
+        height={HUB_HALF * 2}
         fill="var(--bp-bg)"
         stroke="var(--bp-line)"
-        strokeWidth="1.2"
+        strokeWidth="1.4"
       />
       <rect
-        x="-22"
-        y="-22"
-        width="44"
-        height="44"
+        x={-inner}
+        y={-inner}
+        width={inner * 2}
+        height={inner * 2}
         fill="none"
         stroke="var(--bp-line)"
         strokeWidth="0.5"
       />
-      <circle r="8" fill="none" stroke="var(--bp-line)" strokeWidth="1" />
-      <line x1="-8" y1="0" x2="8" y2="0" stroke="var(--bp-line)" strokeWidth="0.6" />
-      <line x1="0" y1="-8" x2="0" y2="8" stroke="var(--bp-line)" strokeWidth="0.6" />
+      <circle r="11" fill="none" stroke="var(--bp-line)" strokeWidth="1.2" />
+      <line x1="-11" y1="0" x2="11" y2="0" stroke="var(--bp-line)" strokeWidth="0.7" />
+      <line x1="0" y1="-11" x2="0" y2="11" stroke="var(--bp-line)" strokeWidth="0.7" />
       <rect
-        x="-44"
-        y="-50"
-        width="88"
+        x="-58"
+        y={-HUB_HALF - 26}
+        width="116"
         height="22"
         fill="var(--bp-bg)"
         stroke="var(--bp-line)"
-        strokeWidth="0.6"
+        strokeWidth="0.7"
       />
       <text
         x="0"
-        y="-37"
+        y={-HUB_HALF - 11}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="10"
+        fontSize="13"
         fontWeight="600"
         fill="var(--bp-line)"
       >
@@ -220,10 +240,10 @@ function Hub() {
       </text>
       <text
         x="0"
-        y="40"
+        y={HUB_HALF + 14}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="8"
+        fontSize="10"
         fill="rgba(110,195,230,0.6)"
       >
         M-01
@@ -234,7 +254,7 @@ function Hub() {
 
 function Tank({ oil, capacity }: { oil: number; capacity: number }) {
   const fill = Math.min(1, oil / capacity);
-  const fillH = 80 * fill;
+  const fillH = TANK_H * fill;
   return (
     <g transform={`translate(${TANK.x} ${TANK.y})`}>
       <defs>
@@ -256,43 +276,55 @@ function Tank({ oil, capacity }: { oil: number; capacity: number }) {
           />
         </pattern>
       </defs>
-      <rect x="-32" y="-40" width="64" height="80" fill="var(--bp-bg)" />
-      <rect x="-32" y={40 - fillH} width="64" height={fillH} fill="rgba(244,180,84,0.45)" />
-      <rect x="-32" y={40 - fillH} width="64" height={fillH} fill="url(#tank-hatch)" />
-      <line
-        x1="-32"
-        y1={40 - fillH}
-        x2="32"
-        y2={40 - fillH}
-        stroke="var(--bp-amber)"
-        strokeWidth="1"
+      <rect x={-TANK_HALF_W} y={-TANK_HALF_H} width={TANK_W} height={TANK_H} fill="var(--bp-bg)" />
+      <rect
+        x={-TANK_HALF_W}
+        y={TANK_HALF_H - fillH}
+        width={TANK_W}
+        height={fillH}
+        fill="rgba(244,180,84,0.45)"
       />
       <rect
-        x="-32"
-        y="-40"
-        width="64"
-        height="80"
+        x={-TANK_HALF_W}
+        y={TANK_HALF_H - fillH}
+        width={TANK_W}
+        height={fillH}
+        fill="url(#tank-hatch)"
+      />
+      <line
+        x1={-TANK_HALF_W}
+        y1={TANK_HALF_H - fillH}
+        x2={TANK_HALF_W}
+        y2={TANK_HALF_H - fillH}
+        stroke="var(--bp-amber)"
+        strokeWidth="1.2"
+      />
+      <rect
+        x={-TANK_HALF_W}
+        y={-TANK_HALF_H}
+        width={TANK_W}
+        height={TANK_H}
         fill="none"
         stroke="var(--bp-line)"
-        strokeWidth="1.2"
+        strokeWidth="1.4"
       />
       {[0.25, 0.5, 0.75].map((t) => (
         <line
           key={t}
-          x1="-32"
-          y1={-40 + 80 * t}
-          x2="-36"
-          y2={-40 + 80 * t}
+          x1={-TANK_HALF_W}
+          y1={-TANK_HALF_H + TANK_H * t}
+          x2={-TANK_HALF_W - 5}
+          y2={-TANK_HALF_H + TANK_H * t}
           stroke="var(--bp-line)"
-          strokeWidth="0.5"
+          strokeWidth="0.6"
         />
       ))}
       <text
         x="0"
-        y="-46"
+        y={-TANK_HALF_H - 14}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="10"
+        fontSize="13"
         fontWeight="600"
         fill="var(--bp-line)"
       >
@@ -300,10 +332,10 @@ function Tank({ oil, capacity }: { oil: number; capacity: number }) {
       </text>
       <text
         x="0"
-        y="0"
+        y="2"
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="11"
+        fontSize="14"
         fontWeight="700"
         fill="var(--bp-line)"
       >
@@ -311,10 +343,10 @@ function Tank({ oil, capacity }: { oil: number; capacity: number }) {
       </text>
       <text
         x="0"
-        y="11"
+        y="18"
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="7"
+        fontSize="10"
         fill="rgba(110,195,230,0.7)"
       >
         / {capacity.toLocaleString("ru-RU")} барр
@@ -337,20 +369,20 @@ function EmptySlot({
   return (
     <g transform={`translate(${x} ${y})`}>
       <circle
-        r="28"
+        r={ST_R}
         fill="var(--bp-bg)"
         stroke="rgba(110,195,230,0.4)"
         strokeWidth="1"
         strokeDasharray="3 3"
       />
-      <line x1="-7" y1="0" x2="7" y2="0" stroke="rgba(110,195,230,0.6)" strokeWidth="1.2" />
-      <line x1="0" y1="-7" x2="0" y2="7" stroke="rgba(110,195,230,0.6)" strokeWidth="1.2" />
+      <line x1="-10" y1="0" x2="10" y2="0" stroke="rgba(110,195,230,0.6)" strokeWidth="1.4" />
+      <line x1="0" y1="-10" x2="0" y2="10" stroke="rgba(110,195,230,0.6)" strokeWidth="1.4" />
       <text
         x="0"
-        y="44"
+        y={ST_R + 18}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="8"
+        fontSize="11"
         fill="rgba(110,195,230,0.55)"
         letterSpacing="1.5"
       >
@@ -359,10 +391,10 @@ function EmptySlot({
       {locked && (
         <text
           x="0"
-          y="54"
+          y={ST_R + 32}
           textAnchor="middle"
           fontFamily="var(--font-mono)"
-          fontSize="7"
+          fontSize="10"
           fill="rgba(110,195,230,0.4)"
         >
           требует R6
@@ -385,7 +417,23 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
   const fill = station.oilRemaining / station.capacity;
   const wellCode = `W-${station.id.toString().padStart(2, "0")}`;
   const pitCode = `PIT-${station.id.toString().padStart(3, "0")}`;
-  const arcLen = fill * 144.5;
+  const arcLen = fill * ST_PROG_C;
+  // Tag bubble «PIT-XXX / W-XX» — отстоит от станции на TAG_GAP, между
+  // ними рисуется тонкая линия-связь.
+  const tagW = 90;
+  const tagH = 36;
+  const TAG_GAP = 12;
+  const tagY = -ST_R - TAG_GAP - tagH;
+  // Pumpjack центрируем по станции: размер = 100 × scale; translate = -size/2.
+  // Scale 0.6 — pumpjack занимает ~60% диаметра станции, ground line чуть
+  // не доходит до ободка снизу.
+  const PUMP_SCALE = 0.6;
+  const PUMP_OFFSET = -50 * PUMP_SCALE;
+  // Статус-точка: чуть утоплена внутри ободка станции.
+  const DOT_OFFSET = (ST_R - 4) * Math.SQRT1_2;
+  // Истощённая станция: пульсирующее амбер-кольцо снаружи, статус-метка
+  // переключается на «иссякла».
+  const empty = fill < 0.05;
   return (
     // biome-ignore lint/a11y/useSemanticElements: <button> нельзя положить в SVG-дерево
     <g
@@ -405,31 +453,40 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
     >
       {selected && (
         <circle
-          r="36"
+          r={ST_RING_R}
           fill="none"
           stroke="var(--bp-amber)"
-          strokeWidth="1.4"
+          strokeWidth="1.6"
           strokeDasharray="4 3"
           className="march"
         />
       )}
-      <circle r="30" fill="var(--bp-bg)" />
-      <line x1="0" y1="-30" x2="0" y2="-58" stroke="var(--bp-line)" strokeWidth="0.5" />
+      {empty && !selected && (
+        <circle
+          r={ST_EMPTY_R}
+          fill="none"
+          stroke="var(--bp-amber)"
+          strokeWidth="2"
+          className="empty-pulse"
+        />
+      )}
+      <circle r={ST_R + 2} fill="var(--bp-bg)" />
+      <line x1="0" y1={-ST_R} x2="0" y2={tagY + tagH} stroke="var(--bp-line)" strokeWidth="0.6" />
       <rect
-        x="-32"
-        y="-86"
-        width="64"
-        height="28"
+        x={-tagW / 2}
+        y={tagY}
+        width={tagW}
+        height={tagH}
         fill="var(--bp-bg)"
         stroke="var(--bp-line)"
-        strokeWidth="0.8"
+        strokeWidth="0.9"
       />
       <text
         x="0"
-        y="-75"
+        y={tagY + 13}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="7"
+        fontSize="9"
         fill="rgba(110,195,230,0.6)"
         letterSpacing="1"
       >
@@ -437,61 +494,61 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
       </text>
       <text
         x="0"
-        y="-63"
+        y={tagY + 28}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="10"
+        fontSize="13"
         fontWeight="700"
         fill="var(--bp-line)"
       >
         {wellCode}
       </text>
-      <circle r="28" fill="var(--bp-bg)" stroke="var(--bp-line)" strokeWidth="1.2" />
+      <circle r={ST_R} fill="var(--bp-bg)" stroke="var(--bp-line)" strokeWidth="1.5" />
       <circle
-        r="28"
+        r={ST_R}
         fill="none"
         stroke={station.enabled ? "var(--bp-amber)" : "rgba(110,195,230,0.3)"}
-        strokeWidth="0.6"
+        strokeWidth="0.8"
         strokeDasharray={station.enabled ? "0" : "2 2"}
       />
-      <g transform="translate(-15 -15) scale(0.30)">
+      <g transform={`translate(${PUMP_OFFSET} ${PUMP_OFFSET}) scale(${PUMP_SCALE})`}>
         <Pumpjack size={100} running={station.enabled} color="var(--bp-line)" />
       </g>
-      <circle r="23" fill="none" stroke="rgba(244,180,84,0.18)" strokeWidth="3" />
+      <circle r={ST_PROG_R} fill="none" stroke="rgba(244,180,84,0.18)" strokeWidth="4" />
       <circle
-        r="23"
+        r={ST_PROG_R}
         fill="none"
         stroke="var(--bp-amber)"
-        strokeWidth="3"
-        strokeDasharray={`${arcLen} 144.5`}
+        strokeWidth="4"
+        strokeDasharray={`${arcLen} ${ST_PROG_C}`}
         transform="rotate(-90)"
       />
       <circle
-        cx="22"
-        cy="-22"
-        r="4"
-        fill={station.enabled ? "var(--bp-green)" : "var(--bp-rust)"}
+        cx={DOT_OFFSET}
+        cy={-DOT_OFFSET}
+        r="5"
+        fill={empty ? "var(--bp-amber)" : station.enabled ? "var(--bp-green)" : "var(--bp-rust)"}
         stroke="var(--bp-bg)"
-        strokeWidth="1"
+        strokeWidth="1.4"
       />
       <text
         x="0"
-        y="44"
+        y={ST_R + 22}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="9"
-        fontWeight="600"
-        fill="var(--bp-line)"
+        fontSize="13"
+        fontWeight="700"
+        fill={empty ? "var(--bp-amber)" : "var(--bp-line)"}
       >
-        {rate.toFixed(1)} барр/с
+        {empty ? "ИССЯКЛА" : `${rate.toFixed(1)} барр/с`}
       </text>
       <text
         x="0"
-        y="54"
+        y={ST_R + 36}
         textAnchor="middle"
         fontFamily="var(--font-mono)"
-        fontSize="7"
-        fill="rgba(110,195,230,0.6)"
+        fontSize="10"
+        fill={empty ? "var(--bp-amber)" : "rgba(110,195,230,0.6)"}
       >
         бак {Math.round(fill * 100)}%
       </text>

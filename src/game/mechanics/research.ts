@@ -1,4 +1,14 @@
-import { MAX_CONTRACT_SLOTS, MAX_STATION_SLOTS } from "@/constants/game";
+import {
+  MAX_CONTRACT_SLOTS,
+  MAX_STATION_SLOTS,
+  STATION_MAX_PRODUCTION_RATE,
+} from "@/constants/game";
+
+/**
+ * R5 «Вторичная добыча»: минимальная скорость = доля от текущей макс. скорости
+ * новой станции (с учётом множителя R1).
+ */
+const SECONDARY_RECOVERY_FRACTION = 0.5;
 
 export interface ResearchDef {
   id: number;
@@ -54,7 +64,7 @@ export const RESEARCH_DEFS: ResearchDef[] = [
     name: "Вторичная добыча",
     cost: 750,
     requires: [3],
-    description: "Мин. добыча 1.5 барр/сек",
+    description: "Мин. добыча 50% от макс.",
   },
   {
     id: 6,
@@ -105,7 +115,9 @@ const EFFECTS: Partial<Record<number, (m: ResearchModifiers) => void>> = {
     m.contractDurationMultiplier = 1.6;
   },
   5: (m) => {
-    m.minProductionFloor = 1.5;
+    // Конкретное значение floor вычисляется после применения всех эффектов
+    // (см. getResearchModifiers ниже), потому что зависит от R1.
+    m.minProductionFloor = STATION_MAX_PRODUCTION_RATE * SECONDARY_RECOVERY_FRACTION;
   },
   6: (m) => {
     m.maxStationSlots = MAX_STATION_SLOTS + 1;
@@ -122,6 +134,12 @@ export function getResearchModifiers(completed: number[]): ResearchModifiers {
   const mods = { ...BASE_MODIFIERS };
   for (const id of completed) {
     EFFECTS[id]?.(mods);
+  }
+  // R5 floor зависит от уже применённого R1 (productionRateMultiplier).
+  // Пересчитываем в самом конце.
+  if (completed.includes(5)) {
+    mods.minProductionFloor =
+      STATION_MAX_PRODUCTION_RATE * mods.productionRateMultiplier * SECONDARY_RECOVERY_FRACTION;
   }
   return mods;
 }

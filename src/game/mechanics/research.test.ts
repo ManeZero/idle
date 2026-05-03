@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { MAX_CONTRACT_SLOTS, MAX_STATION_SLOTS } from "@/constants/game";
+import {
+  MAX_CONTRACT_SLOTS,
+  MAX_STATION_SLOTS,
+  STATION_MAX_PRODUCTION_RATE,
+} from "@/constants/game";
 import { getResearchModifiers } from "./research";
 
 describe("getResearchModifiers", () => {
@@ -32,8 +36,15 @@ describe("getResearchModifiers", () => {
     expect(getResearchModifiers([4]).contractDurationMultiplier).toBe(1.6);
   });
 
-  it("#5 sets min production floor", () => {
-    expect(getResearchModifiers([5]).minProductionFloor).toBe(1.5);
+  it("#5 sets min production floor to 50% of station max rate", () => {
+    expect(getResearchModifiers([5]).minProductionFloor).toBe(STATION_MAX_PRODUCTION_RATE * 0.5);
+  });
+
+  it("#5 floor scales with R1 production multiplier", () => {
+    // R1 даёт +25% → floor = MAX * 1.25 * 0.5
+    expect(getResearchModifiers([1, 5]).minProductionFloor).toBe(
+      STATION_MAX_PRODUCTION_RATE * 1.25 * 0.5,
+    );
   });
 
   it("#6 adds station slot", () => {

@@ -316,6 +316,7 @@ interface NodeProps {
 function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
   const fill = station.oilRemaining / station.capacity;
   const arcLen = fill * 113;
+  const empty = fill < 0.05;
   return (
     // biome-ignore lint/a11y/useSemanticElements: <button> нельзя положить в SVG-дерево
     <g
@@ -343,6 +344,15 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
           className="march"
         />
       )}
+      {empty && !selected && (
+        <circle
+          r="26"
+          fill="none"
+          stroke="var(--bp-amber)"
+          strokeWidth="1.6"
+          className="empty-pulse"
+        />
+      )}
       <circle r="24" fill="var(--bp-bg)" />
       <circle r="22" fill="var(--bp-bg)" stroke="var(--bp-line)" strokeWidth="1.2" />
       <circle
@@ -368,7 +378,7 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
         cx="17"
         cy="-17"
         r="3.5"
-        fill={station.enabled ? "var(--bp-green)" : "var(--bp-rust)"}
+        fill={empty ? "var(--bp-amber)" : station.enabled ? "var(--bp-green)" : "var(--bp-rust)"}
         stroke="var(--bp-bg)"
         strokeWidth="1"
       />
@@ -394,14 +404,14 @@ function StationNode({ station, rate, x, y, selected, onSelect }: NodeProps) {
       </text>
       <text
         x="0"
-        y="36"
+        y="40"
         textAnchor="middle"
         fontFamily="var(--font-mono)"
         fontSize="8"
         fontWeight="600"
-        fill="var(--bp-line)"
+        fill={empty ? "var(--bp-amber)" : "var(--bp-line)"}
       >
-        {rate.toFixed(1)} б/с
+        {empty ? "ИССЯКЛА" : `${rate.toFixed(1)} б/с`}
       </text>
     </g>
   );

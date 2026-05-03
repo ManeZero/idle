@@ -2,16 +2,18 @@ import { RESEARCH_DEFS } from "@/game/mechanics/research";
 import { useGameStore } from "@/stores/gameStore";
 
 // Координаты центров карточек на SVG-canvas (W×H).
-// Карточки 140×108 с центром в (x, y); важно чтобы x-70..x+70 ∈ [0, W],
-// и чтобы по вертикали соседние ряды отстояли минимум на 108+небольшой gap.
+// Карточки CARD_W × CARD_H с центром в (x, y).
+// В третьем ряду 3 карточки: 3*130 + 2*15 = 420 — впритык под W.
+const CARD_W = 130;
+const CARD_H = 108;
 const POSITIONS: Record<number, { x: number; y: number }> = {
   1: { x: 110, y: 80 },
   2: { x: 310, y: 80 },
   3: { x: 110, y: 240 },
   4: { x: 310, y: 240 },
-  5: { x: 78, y: 410 },
+  5: { x: 70, y: 410 },
   6: { x: 210, y: 410 },
-  7: { x: 342, y: 410 },
+  7: { x: 350, y: 410 },
   8: { x: 210, y: 600 },
 };
 
@@ -56,9 +58,9 @@ export function ResearchTree() {
                 <line
                   key={`${req}-${r.id}`}
                   x1={a.x}
-                  y1={a.y + 54}
+                  y1={a.y + CARD_H / 2}
                   x2={b.x}
-                  y2={b.y - 54}
+                  y2={b.y - CARD_H / 2}
                   stroke={linked ? "var(--bp-line)" : "rgba(110,195,230,0.3)"}
                   strokeWidth={linked ? 1.2 : 0.6}
                   strokeDasharray={linked ? "0" : "3 3"}
@@ -121,14 +123,37 @@ function ResearchCard({
   const avail = status === "available";
   const cssClass = `bp-rd-card${done ? " bp-rd-card--done" : ""}${avail ? " bp-rd-card--avail" : ""}`;
   const handle = avail && affordable ? onBuy : undefined;
+  // Заливка фона рисуется через SVG <rect>, чтобы рамка была сплошной со
+  // всех 4 сторон. CSS-border внутри <foreignObject> в некоторых браузерах
+  // обрезается снизу — поэтому ушли на родной SVG-stroke.
+  const fillBg = done
+    ? "rgba(110, 195, 230, 0.18)"
+    : avail
+      ? "rgba(244, 180, 84, 0.10)"
+      : "rgba(14, 42, 58, 0.6)";
+  const strokeColor = done
+    ? "var(--bp-line)"
+    : avail
+      ? "var(--bp-amber)"
+      : "rgba(110, 195, 230, 0.4)";
+  const strokeWidth = avail ? 1.5 : 1;
   return (
     <g transform={`translate(${x} ${y})`}>
+      <rect
+        x={-CARD_W / 2}
+        y={-CARD_H / 2}
+        width={CARD_W}
+        height={CARD_H}
+        fill={fillBg}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+      />
       {avail && (
         <rect
-          x="-70"
-          y="-54"
-          width="140"
-          height="108"
+          x={-CARD_W / 2}
+          y={-CARD_H / 2}
+          width={CARD_W}
+          height={CARD_H}
           fill="none"
           stroke="var(--bp-amber)"
           strokeWidth="0.6"
@@ -136,7 +161,7 @@ function ResearchCard({
           className="march"
         />
       )}
-      <foreignObject x="-70" y="-54" width="140" height="108">
+      <foreignObject x={-CARD_W / 2} y={-CARD_H / 2} width={CARD_W} height={CARD_H}>
         <div className={cssClass}>
           <button
             type="button"

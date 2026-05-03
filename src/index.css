@@ -165,3 +165,17 @@ button {
     transform: translateY(0);
   }
 }
+
+/* Пульсация для опустевших станций — привлекает внимание игрока */
+@keyframes empty-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.empty-pulse {
+  animation: empty-pulse 1.2s ease-in-out infinite;
+}

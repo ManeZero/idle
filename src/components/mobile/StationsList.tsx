@@ -30,11 +30,12 @@ export function StationsList({ selectedId, onSelect }: Props) {
         const rate = calcOilProductionRate(s, mods);
         const fillPct = (s.oilRemaining / s.capacity) * 100;
         const lowFill = fillPct < 15;
+        const empty = fillPct < 5;
         return (
           <button
             key={s.id}
             type="button"
-            className={`bp-mlist__item${selectedId === s.id ? " bp-mlist__item--sel" : ""}`}
+            className={`bp-mlist__item${selectedId === s.id ? " bp-mlist__item--sel" : ""}${empty ? " empty-pulse" : ""}`}
             onClick={() => onSelect(s.id)}
           >
             <span className={`bp-mlist__dot${s.enabled ? " bp-mlist__dot--on" : ""}`} />

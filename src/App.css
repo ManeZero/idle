@@ -99,7 +99,9 @@
   display: grid;
   grid-template-rows: 48px minmax(280px, 1fr) auto;
 }
-.bp-desktop__bottom { min-height: 140px; }
+.bp-desktop__bottom {
+  min-height: 140px;
+}
 
 /* ── Top bar ── */
 .bp-statusbar {
@@ -303,6 +305,11 @@
 .bp-station-cell--locked {
   color: rgba(110, 195, 230, 0.4);
 }
+.bp-station-cell--empty-warn {
+  border-color: var(--bp-amber);
+  color: var(--bp-amber);
+  background: rgba(244, 180, 84, 0.18);
+}
 .bp-stations__actions {
   display: flex;
   gap: 6px;
@@ -350,20 +357,18 @@
   overflow: visible;
 }
 
+/* Заливка и рамка карточки рисуются через SVG <rect> в ResearchTree.tsx,
+   а не через CSS — чтобы border не обрезался снизу внутри <foreignObject>. */
 .bp-rd-card {
   width: 100%;
   height: 100%;
-  background: rgba(14, 42, 58, 0.6);
-  border: 1px solid rgba(110, 195, 230, 0.4);
+  background: transparent;
+  border: none;
 }
-.bp-rd-card--done {
-  background: rgba(110, 195, 230, 0.18);
-  border-color: var(--bp-line);
-}
+.bp-rd-card--done,
 .bp-rd-card--avail {
-  background: rgba(244, 180, 84, 0.1);
-  border-color: var(--bp-amber);
-  border-width: 1.5px;
+  background: transparent;
+  border: none;
 }
 .bp-rd-card__btn {
   width: 100%;
