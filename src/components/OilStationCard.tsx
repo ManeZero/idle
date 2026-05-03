@@ -1,4 +1,5 @@
 import { calcOilProductionRate, calcStationSellValue } from "@/game/mechanics/oil";
+import { getResearchModifiers } from "@/game/mechanics/research";
 import { useGameStore } from "@/stores/gameStore";
 import type { OilStation } from "@/types/game";
 import { formatNumber } from "@/utils/formatNumber";
@@ -10,8 +11,10 @@ interface Props {
 export function OilStationCard({ station }: Props) {
   const sellOilStation = useGameStore((state) => state.sellOilStation);
   const toggleOilStation = useGameStore((state) => state.toggleOilStation);
+  const completedResearch = useGameStore((state) => state.completedResearch);
 
-  const rate = calcOilProductionRate(station);
+  const mods = getResearchModifiers(completedResearch);
+  const rate = calcOilProductionRate(station, mods);
   const fillPercent = Math.round((station.oilRemaining / station.capacity) * 100);
   const sellValue = calcStationSellValue(station);
 
