@@ -243,10 +243,10 @@
   background: transparent;
 }
 .bp-segbar__seg--on {
-  background: var(--bp-line);
+  background: var(--bp-amber);
 }
 .bp-segbar__seg--danger {
-  background: var(--bp-amber);
+  background: var(--bp-rust);
 }
 
 /* ── MarketPanel ── */
