@@ -10,7 +10,6 @@ export interface OilStation {
 export interface EnergyContract {
   id: number;
   energyProvided: number;
-  timeRemaining: number;
 }
 
 export interface GameState {
@@ -18,6 +17,7 @@ export interface GameState {
   oil: number;
   stations: OilStation[];
   contracts: EnergyContract[];
+  contractTime: number;
   nextId: number;
   paused: boolean;
 }

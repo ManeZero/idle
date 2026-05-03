@@ -4,6 +4,8 @@ import { immer } from "zustand/middleware/immer";
 import {
   CONTRACT_DURATION,
   CONTRACT_ENERGY,
+  MAX_CONTRACT_SLOTS,
+  MAX_STATION_SLOTS,
   OIL_SELL_PRICE,
   STARTING_CURRENCY,
   STATION_CAPACITY,
@@ -14,7 +16,7 @@ import {
 import { calcContractCost } from "@/game/mechanics/contracts";
 import { hasEnoughEnergy } from "@/game/mechanics/energy";
 import { calcOilProductionRate, calcStationSellValue } from "@/game/mechanics/oil";
-import type { EnergyContract, GameActions, GameState, OilStation } from "@/types/game";
+import type { GameActions, GameState, OilStation } from "@/types/game";
 
 function readFromStorage(): Partial<GameState> {
   try {
@@ -44,12 +46,6 @@ function extractOil(
   return { stations: updated, extracted };
 }
 
-function advanceContracts(contracts: EnergyContract[], deltaSeconds: number): EnergyContract[] {
-  return contracts
-    .map((c) => ({ ...c, timeRemaining: c.timeRemaining - deltaSeconds }))
-    .filter((c) => c.timeRemaining > 0);
-}
-
 export const useGameStore = create<GameState & GameActions>()(
   persist(
     immer((set, get) => ({
@@ -57,6 +53,7 @@ export const useGameStore = create<GameState & GameActions>()(
       oil: 0,
       stations: [],
       contracts: [],
+      contractTime: 0,
       nextId: 1,
       paused: false,
 
@@ -68,19 +65,28 @@ export const useGameStore = create<GameState & GameActions>()(
           state.oil = saved.oil ?? state.oil;
           state.stations = saved.stations ?? state.stations;
           state.contracts = saved.contracts ?? state.contracts;
+          state.contractTime = saved.contractTime ?? state.contractTime;
           state.nextId = saved.nextId ?? state.nextId;
 
           const energyOk = hasEnoughEnergy(state.contracts, state.stations);
           const result = extractOil(state.stations, energyOk, deltaSeconds);
           state.stations = result.stations;
           state.oil += result.extracted;
-          state.contracts = advanceContracts(state.contracts, deltaSeconds);
+
+          if (state.contracts.length > 0) {
+            state.contractTime -= deltaSeconds;
+            if (state.contractTime <= 0) {
+              state.contracts = [];
+              state.contractTime = 0;
+            }
+          }
         });
       },
 
       buyOilStation() {
-        const { currency, nextId } = get();
+        const { currency, stations, nextId } = get();
         if (currency < STATION_PRICE) return;
+        if (stations.length >= MAX_STATION_SLOTS) return;
         set((state) => {
           state.currency -= STATION_PRICE;
           state.stations.push({
@@ -115,13 +121,11 @@ export const useGameStore = create<GameState & GameActions>()(
         const { currency, contracts, nextId } = get();
         const cost = calcContractCost(contracts.length);
         if (currency < cost) return;
+        if (contracts.length >= MAX_CONTRACT_SLOTS) return;
         set((state) => {
           state.currency -= cost;
-          state.contracts.push({
-            id: nextId,
-            energyProvided: CONTRACT_ENERGY,
-            timeRemaining: CONTRACT_DURATION,
-          });
+          state.contracts.push({ id: nextId, energyProvided: CONTRACT_ENERGY });
+          state.contractTime += CONTRACT_DURATION;
           state.nextId += 1;
         });
       },
@@ -148,6 +152,7 @@ export const useGameStore = create<GameState & GameActions>()(
         oil: state.oil,
         stations: state.stations,
         contracts: state.contracts,
+        contractTime: state.contractTime,
         nextId: state.nextId,
       }),
     },

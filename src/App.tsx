@@ -1,4 +1,4 @@
-import { ContractCard } from "@/components/ContractCard";
+import { EnergyPanel } from "@/components/EnergyPanel";
 import { OilStationCard } from "@/components/OilStationCard";
 import { ResourceDisplay } from "@/components/ResourceDisplay";
 import { ShopPanel } from "@/components/ShopPanel";
@@ -9,7 +9,6 @@ import "./App.css";
 function App() {
   useGameTick();
   const stations = useGameStore((state) => state.stations);
-  const contracts = useGameStore((state) => state.contracts);
   const paused = useGameStore((state) => state.paused);
   const togglePause = useGameStore((state) => state.togglePause);
 
@@ -36,14 +35,10 @@ function App() {
             ))}
           </section>
         )}
-        {contracts.length > 0 && (
-          <section className="panel">
-            <h2 className="panel-title">Контракты</h2>
-            {contracts.map((c) => (
-              <ContractCard key={c.id} contract={c} />
-            ))}
-          </section>
-        )}
+        <section className="panel">
+          <h2 className="panel-title">Энергия</h2>
+          <EnergyPanel />
+        </section>
       </div>
     </div>
   );

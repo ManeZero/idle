@@ -2,7 +2,7 @@ import type { EnergyContract, OilStation } from "@/types/game";
 import { calcEnergyDemand, calcEnergySupply, hasEnoughEnergy } from "./energy";
 
 function makeContract(energyProvided: number, id = 1): EnergyContract {
-  return { id, energyProvided, timeRemaining: 100 };
+  return { id, energyProvided };
 }
 
 function makeStation(enabled: boolean, id = 1): OilStation {

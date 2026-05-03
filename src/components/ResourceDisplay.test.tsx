@@ -16,7 +16,6 @@ const makeStation = (enabled: boolean, id = 1): OilStation => ({
 const makeContract = (id = 1): EnergyContract => ({
   id,
   energyProvided: 10,
-  timeRemaining: 100,
 });
 
 const reset = (overrides = {}) => {
