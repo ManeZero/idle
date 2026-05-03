@@ -156,16 +156,8 @@
   }
 }
 
-.station-id {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: var(--text);
-  flex-shrink: 0;
-  width: 1.5rem;
-}
-
 .station-bar-wrap {
-  width: 56px;
+  width: 52px;
   height: 6px;
   background: var(--border);
   border-radius: 3px;
@@ -180,22 +172,13 @@
   transition: width 0.1s linear;
 }
 
-.station-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
+.station-info {
   flex: 1;
-  min-width: 0;
-}
-
-.station-rate {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--accent);
-}
-
-.station-capacity {
-  font-size: 0.7rem;
-  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .generator-name {
