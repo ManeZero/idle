@@ -34,10 +34,16 @@ const reset = (overrides = {}) => {
 beforeEach(() => reset());
 
 describe("OilStationCard", () => {
-  it("shows production rate and fill percent", () => {
+  it("shows production rate", () => {
     const station = makeStation({ oilRemaining: 5_000 });
     render(<OilStationCard station={station} />);
-    expect(screen.getByText(/5\.0 барр\.\/сек · 50% ёмкости/)).toBeInTheDocument();
+    expect(screen.getByText("5.0 барр./сек")).toBeInTheDocument();
+  });
+
+  it("shows capacity as current/max", () => {
+    const station = makeStation({ oilRemaining: 5_000 });
+    render(<OilStationCard station={station} />);
+    expect(screen.getByText(/5\.00K \/ 10\.00K барр\./)).toBeInTheDocument();
   });
 
   it("shows energy consumption", () => {

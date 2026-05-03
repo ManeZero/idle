@@ -15,15 +15,19 @@ export function OilStationCard({ station }: Props) {
 
   const mods = getResearchModifiers(completedResearch);
   const rate = calcOilProductionRate(station, mods);
-  const fillPercent = Math.round((station.oilRemaining / station.capacity) * 100);
+  const fillPercent = (station.oilRemaining / station.capacity) * 100;
   const sellValue = calcStationSellValue(station);
 
   return (
     <div className={`generator-card${station.enabled ? "" : " generator-card--disabled"}`}>
       <div className="generator-info">
         <span className="generator-name">Нефтяная станция #{station.id}</span>
-        <span className="generator-production">
-          {formatNumber(rate)} барр./сек · {fillPercent}% ёмкости
+        <span className="generator-production">{formatNumber(rate)} барр./сек</span>
+        <div className="station-bar">
+          <div className="station-bar-fill" style={{ width: `${fillPercent}%` }} />
+        </div>
+        <span className="generator-count">
+          {formatNumber(station.oilRemaining, 0)} / {formatNumber(station.capacity, 0)} барр.
         </span>
         <span className="generator-count">{station.energyConsumption} МВт</span>
       </div>
