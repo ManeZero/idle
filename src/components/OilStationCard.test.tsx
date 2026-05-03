@@ -43,12 +43,7 @@ describe("OilStationCard", () => {
   it("shows capacity as current/max", () => {
     const station = makeStation({ oilRemaining: 5_000 });
     render(<OilStationCard station={station} />);
-    expect(screen.getByText(/5\.00K \/ 10\.00K барр\./)).toBeInTheDocument();
-  });
-
-  it("shows energy consumption", () => {
-    render(<OilStationCard station={makeStation()} />);
-    expect(screen.getByText("10 МВт")).toBeInTheDocument();
+    expect(screen.getByText(/5\.00K \/ 10\.00K/)).toBeInTheDocument();
   });
 
   it("toggle button calls toggleOilStation", async () => {
@@ -63,7 +58,7 @@ describe("OilStationCard", () => {
     const station = makeStation();
     reset({ stations: [station] });
     render(<OilStationCard station={station} />);
-    await userEvent.click(screen.getByText(/Продать/));
+    await userEvent.click(screen.getByText("300"));
     expect(useGameStore.getState().stations).toHaveLength(0);
     expect(useGameStore.getState().currency).toBe(300);
   });

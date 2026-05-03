@@ -19,17 +19,16 @@ export function OilStationCard({ station }: Props) {
   const sellValue = calcStationSellValue(station);
 
   return (
-    <div className={`generator-card${station.enabled ? "" : " generator-card--disabled"}`}>
-      <div className="generator-info">
-        <span className="generator-name">Нефтяная станция #{station.id}</span>
-        <span className="generator-production">{formatNumber(rate)} барр./сек</span>
-        <div className="station-bar">
-          <div className="station-bar-fill" style={{ width: `${fillPercent}%` }} />
-        </div>
-        <span className="generator-count">
-          {formatNumber(station.oilRemaining, 0)} / {formatNumber(station.capacity, 0)} барр.
+    <div className={`station-card${station.enabled ? "" : " station-card--off"}`}>
+      <span className="station-id">#{station.id}</span>
+      <div className="station-bar-wrap">
+        <div className="station-bar-fill" style={{ width: `${fillPercent}%` }} />
+      </div>
+      <div className="station-stats">
+        <span className="station-rate">{formatNumber(rate)} барр./сек</span>
+        <span className="station-capacity">
+          {formatNumber(station.oilRemaining, 0)} / {formatNumber(station.capacity, 0)}
         </span>
-        <span className="generator-count">{station.energyConsumption} МВт</span>
       </div>
       <div className="card-actions">
         <button
@@ -40,7 +39,7 @@ export function OilStationCard({ station }: Props) {
           {station.enabled ? "ВКЛ" : "ВЫКЛ"}
         </button>
         <button className="sell-button" onClick={() => sellOilStation(station.id)} type="button">
-          Продать {formatNumber(sellValue, 0)}
+          {formatNumber(sellValue, 0)}
         </button>
       </div>
     </div>

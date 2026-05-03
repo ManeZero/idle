@@ -115,7 +115,7 @@
   gap: 0.5rem;
 }
 
-/* ── Карточки ────────────────────────────────── */
+/* ── Карточки магазина/энергии ───────────────── */
 
 .generator-card {
   display: flex;
@@ -140,20 +140,62 @@
   flex: 1;
 }
 
-.station-bar {
-  width: 100%;
-  height: 4px;
+/* ── Карточка станции (компактная) ───────────── */
+
+.station-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+
+  &.station-card--off {
+    opacity: 0.55;
+  }
+}
+
+.station-id {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--text);
+  flex-shrink: 0;
+  width: 1.5rem;
+}
+
+.station-bar-wrap {
+  width: 56px;
+  height: 6px;
   background: var(--border);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
-  margin: 0.1rem 0;
+  flex-shrink: 0;
 }
 
 .station-bar-fill {
   height: 100%;
   background: var(--accent-border);
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 0.1s linear;
+}
+
+.station-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.station-rate {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.station-capacity {
+  font-size: 0.7rem;
+  color: var(--text);
 }
 
 .generator-name {
