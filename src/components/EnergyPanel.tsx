@@ -1,11 +1,6 @@
 import { calcEnergySupply } from "@/game/mechanics/energy";
 import { useGameStore } from "@/stores/gameStore";
-
-function contractWord(n: number): string {
-  if (n === 1) return "контракт";
-  if (n <= 4) return "контракта";
-  return "контрактов";
-}
+import { pluralizeRu } from "@/utils/pluralize";
 
 export function EnergyPanel() {
   const contracts = useGameStore((state) => state.contracts);
@@ -25,8 +20,8 @@ export function EnergyPanel() {
   return (
     <div className="generator-card">
       <span className="generator-production">
-        Энергия: {totalEnergy} МВт ({contracts.length} {contractWord(contracts.length)}) ·{" "}
-        {timeLeft} сек
+        Энергия: {totalEnergy} МВт ({contracts.length}{" "}
+        {pluralizeRu(contracts.length, ["контракт", "контракта", "контрактов"])}) · {timeLeft} сек
       </span>
     </div>
   );

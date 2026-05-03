@@ -16,7 +16,7 @@ import {
 import { calcContractCost } from "@/game/mechanics/contracts";
 import { hasEnoughEnergy } from "@/game/mechanics/energy";
 import { calcOilProductionRate, calcStationSellValue } from "@/game/mechanics/oil";
-import type { GameActions, GameState, OilStation } from "@/types/game";
+import type { EnergyContract, GameActions, GameState, OilStation } from "@/types/game";
 
 function readFromStorage(): Partial<GameState> {
   try {
@@ -44,6 +44,17 @@ function extractOil(
     return { ...s, oilRemaining: s.oilRemaining - amount };
   });
   return { stations: updated, extracted };
+}
+
+function tickContractTime(
+  contracts: EnergyContract[],
+  contractTime: number,
+  deltaSeconds: number,
+): { contracts: EnergyContract[]; contractTime: number } {
+  if (contracts.length === 0) return { contracts, contractTime };
+  const next = contractTime - deltaSeconds;
+  if (next <= 0) return { contracts: [], contractTime: 0 };
+  return { contracts, contractTime: next };
 }
 
 export const useGameStore = create<GameState & GameActions>()(
@@ -74,11 +85,9 @@ export const useGameStore = create<GameState & GameActions>()(
           state.oil += result.extracted;
 
           if (state.contracts.length > 0) {
-            state.contractTime -= deltaSeconds;
-            if (state.contractTime <= 0) {
-              state.contracts = [];
-              state.contractTime = 0;
-            }
+            const ct = tickContractTime(state.contracts, state.contractTime, deltaSeconds);
+            state.contracts = ct.contracts;
+            state.contractTime = ct.contractTime;
           }
         });
       },
