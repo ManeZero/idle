@@ -16,6 +16,7 @@ export interface ResearchModifiers {
   minProductionFloor: number;
   maxStationSlots: number;
   maxContractSlots: number;
+  autorenewEnabled: boolean;
   autosellEnabled: boolean;
 }
 
@@ -56,7 +57,13 @@ export const RESEARCH_DEFS: ResearchDef[] = [
     description: "Мин. добыча 1.5 барр/сек",
   },
   { id: 6, name: "6-й слот станции", cost: 800, requires: [3], description: "+1 слот под станцию" },
-  { id: 7, name: "Второй контракт", cost: 900, requires: [4], description: "+1 слот контракта" },
+  {
+    id: 7,
+    name: "Авторенёвый контракт",
+    cost: 900,
+    requires: [4],
+    description: "Контракт продлевается автоматически",
+  },
   {
     id: 8,
     name: "Нефтепровод",
@@ -74,6 +81,7 @@ const BASE_MODIFIERS: ResearchModifiers = {
   minProductionFloor: 0,
   maxStationSlots: MAX_STATION_SLOTS,
   maxContractSlots: MAX_CONTRACT_SLOTS,
+  autorenewEnabled: false,
   autosellEnabled: false,
 };
 
@@ -97,7 +105,7 @@ const EFFECTS: Partial<Record<number, (m: ResearchModifiers) => void>> = {
     m.maxStationSlots = MAX_STATION_SLOTS + 1;
   },
   7: (m) => {
-    m.maxContractSlots = MAX_CONTRACT_SLOTS + 1;
+    m.autorenewEnabled = true;
   },
   8: (m) => {
     m.autosellEnabled = true;

@@ -18,6 +18,12 @@ export function ShopPanel() {
   const contractMW = enabledCount * CONTRACT_ENERGY;
   const contractDuration = Math.round(CONTRACT_DURATION * mods.contractDurationMultiplier);
 
+  const neededEnergy = enabledCount * CONTRACT_ENERGY;
+  const currentEnergy = contracts.reduce((s, c) => s + c.energyProvided, 0);
+  const isUpgrade = contracts.length > 0 && currentEnergy < neededEnergy;
+  const isCovered = contracts.length >= mods.maxContractSlots && !isUpgrade;
+  const contractDisabled = enabledCount === 0 || currency < contractCost || isCovered;
+
   return (
     <div className="shop-panel">
       <div className="generator-card">
@@ -47,18 +53,20 @@ export function ShopPanel() {
             Контракты ({contracts.length}/{mods.maxContractSlots})
           </span>
         </div>
-        <button
-          className="buy-button"
-          disabled={
-            enabledCount === 0 ||
-            currency < contractCost ||
-            contracts.length >= mods.maxContractSlots
-          }
-          onClick={buyContract}
-          type="button"
-        >
-          Купить — {formatNumber(contractCost, 0)}
-        </button>
+        {isCovered ? (
+          <button className="buy-button" disabled type="button">
+            Активен
+          </button>
+        ) : (
+          <button
+            className="buy-button"
+            disabled={contractDisabled}
+            onClick={buyContract}
+            type="button"
+          >
+            {isUpgrade ? "Обновить" : "Купить"} — {formatNumber(contractCost, 0)}
+          </button>
+        )}
       </div>
     </div>
   );

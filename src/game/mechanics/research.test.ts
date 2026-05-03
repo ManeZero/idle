@@ -12,6 +12,7 @@ describe("getResearchModifiers", () => {
     expect(m.minProductionFloor).toBe(0);
     expect(m.maxStationSlots).toBe(MAX_STATION_SLOTS);
     expect(m.maxContractSlots).toBe(MAX_CONTRACT_SLOTS);
+    expect(m.autorenewEnabled).toBe(false);
     expect(m.autosellEnabled).toBe(false);
   });
 
@@ -39,8 +40,8 @@ describe("getResearchModifiers", () => {
     expect(getResearchModifiers([6]).maxStationSlots).toBe(MAX_STATION_SLOTS + 1);
   });
 
-  it("#7 adds contract slot", () => {
-    expect(getResearchModifiers([7]).maxContractSlots).toBe(MAX_CONTRACT_SLOTS + 1);
+  it("#7 enables autorenew", () => {
+    expect(getResearchModifiers([7]).autorenewEnabled).toBe(true);
   });
 
   it("#8 enables autosell", () => {
@@ -52,7 +53,7 @@ describe("getResearchModifiers", () => {
     expect(m.productionRateMultiplier).toBe(1.25);
     expect(m.contractCostMultiplier).toBe(0.8);
     expect(m.maxStationSlots).toBe(MAX_STATION_SLOTS + 1);
-    expect(m.maxContractSlots).toBe(MAX_CONTRACT_SLOTS + 1);
+    expect(m.autorenewEnabled).toBe(true);
     expect(m.autosellEnabled).toBe(false);
   });
 });

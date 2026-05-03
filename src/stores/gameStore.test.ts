@@ -96,6 +96,20 @@ describe("tick", () => {
     expect(useGameStore.getState().oil).toBeLessThan(1_000);
     expect(useGameStore.getState().experience).toBeGreaterThan(0);
   });
+
+  it("autorenew buys new contract immediately when expired and research #7 complete", () => {
+    const station = makeStation();
+    const contract = makeContract({ timeRemaining: 0.05 });
+    reset({
+      currency: 1_000,
+      stations: [station],
+      contracts: [contract],
+      completedResearch: [2, 7],
+    });
+    useGameStore.getState().tick(0.1);
+    expect(useGameStore.getState().contracts).toHaveLength(1);
+    expect(useGameStore.getState().contracts[0]?.timeRemaining).toBeGreaterThan(0);
+  });
 });
 
 describe("buyOilStation", () => {
@@ -196,11 +210,21 @@ describe("buyContract", () => {
     expect(useGameStore.getState().contracts[0]?.timeRemaining).toBe(CONTRACT_DURATION);
   });
 
-  it("does not buy contract when slot limit is reached", () => {
+  it("does not buy contract when existing contract already covers all enabled stations", () => {
     reset({ currency: 1_000, stations: [makeStation()], contracts: [makeContract()] });
     useGameStore.getState().buyContract();
     expect(useGameStore.getState().contracts).toHaveLength(1);
     expect(useGameStore.getState().currency).toBe(1_000);
+  });
+
+  it("upgrades contract when current energy is insufficient for enabled stations", () => {
+    const stations = [makeStation({ id: 1 }), makeStation({ id: 2 })];
+    const contract = makeContract({ energyProvided: 10 });
+    reset({ currency: 1_000, stations, contracts: [contract] });
+    useGameStore.getState().buyContract();
+    expect(useGameStore.getState().contracts).toHaveLength(1);
+    expect(useGameStore.getState().contracts[0]?.energyProvided).toBe(20);
+    expect(useGameStore.getState().currency).toBe(860);
   });
 });
 

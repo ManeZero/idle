@@ -88,9 +88,17 @@ describe("ShopPanel", () => {
     expect(useGameStore.getState().currency).toBe(900);
   });
 
-  it("contract buy button disabled when slot limit reached", () => {
+  it("contract button shows 'Активен' when contract covers all enabled stations", () => {
     reset({ currency: 1_000, stations: [makeStation(1)], contracts: [makeContract(1)] });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 100/)).toBeDisabled();
+    expect(screen.getByText("Активен")).toBeDisabled();
+  });
+
+  it("contract button shows 'Обновить' when contract is insufficient", () => {
+    const contract = makeContract(1);
+    const stations = [makeStation(1), makeStation(2)];
+    reset({ currency: 1_000, stations, contracts: [contract] });
+    render(<ShopPanel />);
+    expect(screen.getByText(/Обновить — 140/)).toBeEnabled();
   });
 });

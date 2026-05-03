@@ -68,6 +68,50 @@ function tickAutosell(
   state.experience += amount * EXPERIENCE_PER_BARREL;
 }
 
+function tickAutorenew(
+  state: {
+    stations: OilStation[];
+    contracts: EnergyContract[];
+    currency: number;
+    nextId: number;
+  },
+  mods: { contractCostMultiplier: number; contractDurationMultiplier: number },
+): void {
+  if (state.contracts.length > 0) return;
+  const enabledCount = state.stations.filter((s) => s.enabled).length;
+  if (enabledCount === 0) return;
+  const cost = Math.floor(calcContractCost(enabledCount) * mods.contractCostMultiplier);
+  if (state.currency < cost) return;
+  const duration = Math.round(CONTRACT_DURATION * mods.contractDurationMultiplier);
+  state.currency -= cost;
+  state.contracts.push({
+    id: state.nextId,
+    energyProvided: enabledCount * CONTRACT_ENERGY,
+    timeRemaining: duration,
+  });
+  state.nextId += 1;
+}
+
+function tickContracts(
+  state: {
+    stations: OilStation[];
+    contracts: EnergyContract[];
+    currency: number;
+    nextId: number;
+  },
+  mods: {
+    contractCostMultiplier: number;
+    contractDurationMultiplier: number;
+    autorenewEnabled: boolean;
+  },
+  deltaSeconds: number,
+): void {
+  if (state.contracts.length > 0) {
+    state.contracts = advanceContracts(state.contracts, deltaSeconds);
+  }
+  if (mods.autorenewEnabled) tickAutorenew(state, mods);
+}
+
 export const useGameStore = create<GameState & GameActions>()(
   persist(
     immer((set, get) => ({
@@ -94,14 +138,13 @@ export const useGameStore = create<GameState & GameActions>()(
           state.completedResearch = saved.completedResearch ?? state.completedResearch;
 
           const mods = getResearchModifiers(state.completedResearch);
+
+          tickContracts(state, mods, deltaSeconds);
+
           const energyOk = hasEnoughEnergy(state.contracts, state.stations);
           const result = extractOil(state.stations, energyOk, deltaSeconds, mods);
           state.stations = result.stations;
           state.oil += result.extracted;
-
-          if (state.contracts.length > 0) {
-            state.contracts = advanceContracts(state.contracts, deltaSeconds);
-          }
 
           if (mods.autosellEnabled) tickAutosell(state, deltaSeconds);
         });
@@ -150,15 +193,24 @@ export const useGameStore = create<GameState & GameActions>()(
         if (enabledCount === 0) return;
         const cost = Math.floor(calcContractCost(enabledCount) * mods.contractCostMultiplier);
         if (currency < cost) return;
-        if (contracts.length >= mods.maxContractSlots) return;
+        const neededEnergy = enabledCount * CONTRACT_ENERGY;
+        const currentEnergy = contracts.reduce((s, c) => s + c.energyProvided, 0);
+        const isUpgrade = contracts.length > 0 && currentEnergy < neededEnergy;
+        if (contracts.length >= mods.maxContractSlots && !isUpgrade) return;
         const duration = Math.round(CONTRACT_DURATION * mods.contractDurationMultiplier);
         set((state) => {
           state.currency -= cost;
-          state.contracts.push({
-            id: nextId,
-            energyProvided: enabledCount * CONTRACT_ENERGY,
-            timeRemaining: duration,
-          });
+          if (isUpgrade) {
+            state.contracts = [
+              { id: nextId, energyProvided: neededEnergy, timeRemaining: duration },
+            ];
+          } else {
+            state.contracts.push({
+              id: nextId,
+              energyProvided: neededEnergy,
+              timeRemaining: duration,
+            });
+          }
           state.nextId += 1;
         });
       },
