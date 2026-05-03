@@ -1,0 +1,270 @@
+/* Industrial / blueprint design tokens for the Idle oil game */
+:root {
+  /* Paper / ink palette */
+  --paper-0: #ede6d6; /* base paper */
+  --paper-1: #e3dcc8; /* darker paper / panels */
+  --paper-2: #d8d0ba; /* dividers */
+  --paper-3: #c8bfa6; /* deep paper */
+  --ink-0: #1a1814; /* primary ink */
+  --ink-1: #3a352c; /* secondary ink */
+  --ink-2: #5a554a; /* tertiary */
+  --ink-3: #8a8473; /* muted */
+  --ink-4: #b5ad95; /* very muted */
+
+  /* Blueprint cyan (alternate theme) */
+  --blue-0: #0e2a3a;
+  --blue-1: #14405a;
+  --blue-2: #2a6688;
+  --blue-line: #6ec3e6;
+
+  /* Accents */
+  --amber: oklch(0.62 0.16 55); /* oil amber */
+  --amber-soft: oklch(0.78 0.1 60);
+  --amber-deep: oklch(0.42 0.14 45);
+  --rust: oklch(0.55 0.18 25); /* alarm */
+  --green: oklch(0.55 0.1 145); /* success / online */
+
+  /* Type */
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-display: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Strokes */
+  --stroke-hair: 0.5px;
+  --stroke-thin: 1px;
+  --stroke-bold: 1.5px;
+
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 6px;
+}
+
+/* Blueprint paper background pattern */
+.bp-paper {
+  background-color: var(--paper-0);
+  background-image:
+    linear-gradient(rgba(26, 24, 20, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 24, 20, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 30% 20%, rgba(120, 100, 70, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(120, 100, 70, 0.05) 0%, transparent 60%);
+  background-size:
+    24px 24px,
+    24px 24px,
+    100% 100%,
+    100% 100%;
+}
+.bp-paper-fine {
+  background-color: var(--paper-0);
+  background-image:
+    linear-gradient(rgba(26, 24, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 24, 20, 0.05) 1px, transparent 1px);
+  background-size:
+    8px 8px,
+    8px 8px;
+}
+
+/* Blueprint dark theme */
+.bp-blueprint {
+  background-color: var(--blue-0);
+  background-image:
+    linear-gradient(rgba(110, 195, 230, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 195, 230, 0.08) 1px, transparent 1px);
+  background-size:
+    24px 24px,
+    24px 24px;
+  color: var(--blue-line);
+}
+
+/* Engineering frame — corner ticks */
+.eng-frame {
+  position: relative;
+}
+.eng-frame::before,
+.eng-frame::after,
+.eng-frame > .eng-corner-bl,
+.eng-frame > .eng-corner-br {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: currentColor;
+  border-style: solid;
+  border-width: 0;
+}
+.eng-frame::before {
+  top: 0;
+  left: 0;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.eng-frame::after {
+  top: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+.eng-frame > .eng-corner-bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+.eng-frame > .eng-corner-br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+/* Diagonal hatching */
+.hatch-amber {
+  background-image: repeating-linear-gradient(
+    45deg,
+    oklch(0.62 0.16 55 / 0.18) 0 2px,
+    transparent 2px 6px
+  );
+}
+.hatch-ink {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(26, 24, 20, 0.1) 0 1px,
+    transparent 1px 5px
+  );
+}
+.hatch-dense {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(26, 24, 20, 0.18) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Tabular numbers */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Stamp effect */
+.stamp {
+  display: inline-block;
+  border: 1.5px solid currentColor;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transform: rotate(-2deg);
+}
+
+/* Pumpjack animation */
+@keyframes pumpjack {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+}
+.pump-arm {
+  transform-origin: 50% 50%;
+  animation: pumpjack 2.6s ease-in-out infinite;
+}
+/* Polished rod — slides vertically in sync with horsehead.
+   When beam is at -12deg, horsehead is HIGH, so rod is SHORT (smaller scaleY).
+   When beam is at +18deg, horsehead is LOW, so rod is LONG (larger scaleY).
+   Origin bottom keeps the rod anchored at the wellhead. */
+@keyframes pump-rod-stroke {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.pump-rod {
+  animation: pump-rod-stroke 2.6s ease-in-out infinite;
+}
+
+/* Pulsing meter */
+@keyframes pulse-bar {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Oil flow */
+@keyframes oil-flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -16;
+  }
+}
+.flow-line {
+  stroke-dasharray: 4 4;
+  animation: oil-flow 1.6s linear infinite;
+}
+
+/* Tick / count up flicker */
+@keyframes tick-flick {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Marching ants */
+@keyframes march {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+.march {
+  stroke-dasharray: 4 4;
+  animation: march 0.8s linear infinite;
+}
+
+/* Float-up gain */
+@keyframes float-gain {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-32px);
+    opacity: 0;
+  }
+}
+.gain-float {
+  animation: float-gain 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Oil drop fall */
+@keyframes oil-drop {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}

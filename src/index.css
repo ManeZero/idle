@@ -1,109 +1,161 @@
+/* ==========================================================================
+   Дизайн-токены — P&ID blueprint-стиль
+   Цвета, шрифты, анимации. Используются всем UI игры.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Blueprint-палитра (тёмно-синий чертёж) */
+  --bp-bg: #0e2a3a;
+  --bp-bg-1: #14405a;
+  --bp-bg-2: #2a6688;
+  --bp-line: #6ec3e6;
+  --bp-line-50: rgba(110, 195, 230, 0.5);
+  --bp-line-30: rgba(110, 195, 230, 0.3);
+  --bp-line-15: rgba(110, 195, 230, 0.15);
+  --bp-bg-translucent: rgba(14, 42, 58, 0.85);
 
-  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
-  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Акценты */
+  --bp-amber: #f4b454;
+  --bp-amber-soft: rgba(244, 180, 84, 0.45);
+  --bp-amber-dim: rgba(244, 180, 84, 0.18);
+  --bp-green: #79d399;
+  --bp-rust: #9c9485;
 
-  font: 18px / 145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  /* Шрифты */
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  font-family: var(--font-ui);
+  color-scheme: dark;
+  color: var(--bp-line);
+  background: var(--bp-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
 }
 
-body {
+body,
+html,
+#root {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+button {
+  font-family: inherit;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* Чертёжная сетка фоном — 24px */
+.bp-blueprint {
+  background-color: var(--bp-bg);
+  background-image:
+    linear-gradient(rgba(110, 195, 230, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 195, 230, 0.08) 1px, transparent 1px);
+  background-size:
+    24px 24px,
+    24px 24px;
+  color: var(--bp-line);
+}
+
+/* Числа моноширинно одинаковой ширины — для таблиц/счётчиков */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ===== Анимации ===== */
+
+/* Walking beam насоса */
+@keyframes pumpjack {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(18deg);
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+.pump-arm {
+  transform-origin: 50px 52px;
+  animation: pumpjack 2.6s ease-in-out infinite;
+}
+
+/* Полированный шток — синхронно с beam, но как отдельный элемент */
+@keyframes pump-rod-stroke {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(1);
   }
 }
-p {
-  margin: 0;
+.pump-rod {
+  transform-origin: 10px 84px;
+  animation: pump-rod-stroke 2.6s ease-in-out infinite;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Поток нефти в трубах */
+@keyframes oil-flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -16;
+  }
+}
+.flow-line {
+  stroke-dasharray: 4 4;
+  animation: oil-flow 1.6s linear infinite;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Marching ants — для available R&D и selection ring */
+@keyframes march {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+.march {
+  stroke-dasharray: 4 4;
+  animation: march 0.8s linear infinite;
+}
+
+/* Всплывающий +X над станцией */
+@keyframes float-gain {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-32px);
+    opacity: 0;
+  }
+}
+.gain-float {
+  animation: float-gain 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Bottom-sheet выезжает снизу (мобильный инспектор) */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }

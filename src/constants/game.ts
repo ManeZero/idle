@@ -6,6 +6,10 @@ export const STARTING_CURRENCY = 500;
 export const STATION_PRICE = 300;
 export const STATION_CAPACITY = 3_000;
 export const STATION_MAX_PRODUCTION_RATE = 10;
+
+// Лимит ёмкости центрального резервуара (накопленная нефть, ждущая продажи).
+// Если резервуар полон — добытая нефть пропадает (станции качают, но впустую).
+export const OIL_TANK_CAPACITY = 10_000;
 export const STATION_ENERGY_CONSUMPTION = 10;
 export const STATION_SELL_PERCENT = 0.6;
 

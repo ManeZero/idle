@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Idle Oil — Blueprint Designs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Inter', sans-serif; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  /* in-artboard scroll fix */
+  [data-dc-slot] .dc-card { overflow: hidden !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="v5-schematic-topdown.jsx"></script>
+<script type="text/babel" src="v5-mobile.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "speed": "1x",
+  "density": "cozy",
+  "animations": true,
+  "showGrid": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Pause global animations if disabled
+  React.useEffect(() => {
+    const id = 'global-anim-toggle';
+    let style = document.getElementById(id);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = id;
+      document.head.appendChild(style);
+    }
+    style.textContent = tweaks.animations
+      ? ''
+      : '*, *::before, *::after { animation: none !important; transition: none !important; }';
+  }, [tweaks.animations]);
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="intro" title="Idle Oil — P&ID Schematic" subtitle="Industrial blueprint direction">
+          <DCArtboard id="v5" label="V5 · Схема P&ID (тёмный чертёж)" width={1280} height={820}>
+            <V5SchematicTopDown />
+          </DCArtboard>
+          <DCArtboard id="v5m" label="V5 · Мобильный (390×844)" width={390} height={844}>
+            <V5Mobile />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="TWEAKS · IDLE OIL">
+        <TweakSection label="Скорость симуляции">
+          <TweakRadio
+            label="Speed"
+            value={tweaks.speed}
+            options={[{value:'1x',label:'1×'},{value:'5x',label:'5×'},{value:'50x',label:'50×'}]}
+            onChange={(v) => setTweak('speed', v)}
+          />
+          <TweakRadio
+            label="Density"
+            value={tweaks.density}
+            options={[{value:'compact',label:'Compact'},{value:'cozy',label:'Cozy'}]}
+            onChange={(v) => setTweak('density', v)}
+          />
+        </TweakSection>
+        <TweakSection label="Отображение">
+          <TweakToggle
+            label="Анимации"
+            value={tweaks.animations}
+            onChange={(v) => setTweak('animations', v)}
+          />
+          <TweakToggle
+            label="Координатная сетка"
+            value={tweaks.showGrid}
+            onChange={(v) => setTweak('showGrid', v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+// (unused) Standalone tree, kept stripped
+function ResearchTreeStandalone_unused() { return null; }
+/* removed body
+function _OldStandaloneTree({ variant }) {
+  const isBP = variant === 'blueprint';
+  const bg = isBP ? 'bp-blueprint' : 'bp-paper';
+  const ink = isBP ? 'var(--blue-line)' : 'var(--ink-0)';
+  const muted = isBP ? 'rgba(110,195,230,0.5)' : 'var(--ink-3)';
+  const accent = isBP ? '#f4b454' : 'var(--amber-deep)';
+
+  const positions = {
+    R1: { x: 130, y: 70 },  R2: { x: 390, y: 70 },
+    R3: { x: 130, y: 230 }, R4: { x: 390, y: 230 },
+    R5: { x: 80, y: 410 }, R6: { x: 220, y: 410 }, R7: { x: 390, y: 410 },
+    R8: { x: 220, y: 600 },
+  };
+  const W = 520, H = 760;
+  const states = RESEARCH_STATE;
+
+  return (
+    <div className={bg} style={{ width: '100%', height: '100%', position: 'relative', color: ink, padding: 24, fontFamily: 'var(--font-ui)' }}>
+      <div style={{ position: 'absolute', top: 18, left: 24, right: 24, borderBottom: `1px solid ${ink}`, paddingBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em', opacity: 0.7 }}>R&amp;D PROGRAM · ИССЛЕДОВАНИЯ</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600 }}>Tech Tree · 8 nodes</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>2 / 8 · 412 XP</div>
+        </div>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="100%" style={{ marginTop: 60, overflow: 'visible' }}>
+        {RESEARCH.flatMap(r => r.req.map(req => {
+          const a = positions[req], b = positions[r.id];
+          const linked = states[req] === 'done';
+          return (
+            <line key={`${req}-${r.id}`}
+              x1={a.x} y1={a.y + 35} x2={b.x} y2={b.y - 35}
+              stroke={linked ? ink : muted}
+              strokeWidth={linked ? 1.2 : 0.7}
+              strokeDasharray={linked ? '0' : '3 3'}
+            />
+          );
+        }))}
+        {RESEARCH.map(r => {
+          const p = positions[r.id];
+          const s = states[r.id];
+          const done = s === 'done', avail = s === 'available';
+          const c = done ? ink : avail ? accent : muted;
+          return (
+            <g key={r.id} transform={`translate(${p.x} ${p.y})`}>
+              <rect x="-90" y="-35" width="180" height="70"
+                fill={done ? (isBP ? 'rgba(110,195,230,0.16)' : 'var(--paper-1)') : avail ? (isBP ? 'rgba(244,180,84,0.10)' : 'rgba(255,200,90,0.18)') : 'transparent'}
+                stroke={c}
+                strokeWidth={avail ? 1.8 : 1.2}
+              />
+              {avail && (
+                <rect x="-90" y="-35" width="180" height="70" fill="none" stroke={c} strokeWidth="0.7" strokeDasharray="3 3" className="march"/>
+              )}
+              <text x="-82" y="-18" fontFamily="var(--font-mono)" fontSize="13" fontWeight="700" fill={c}>{r.id}</text>
+              <text x="82" y="-18" textAnchor="end" fontFamily="var(--font-mono)" fontSize="10" fill={c}>{done ? '✓ DONE' : `${r.xp} XP`}</text>
+              <text x="-82" y="3" fontFamily="var(--font-ui)" fontSize="13" fontWeight="600" fill={done ? ink : avail ? accent : muted}>{r.name}</text>
+              <text x="-82" y="18" fontFamily="var(--font-mono)" fontSize="9" fill={muted}>{r.effect}</text>
+              <text x="-82" y="29" fontFamily="var(--font-mono)" fontSize="8" fill={muted} fontStyle="italic">{r.name_en} · {r.req.length ? `req ${r.req.join('+')}` : 'no req'}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+*/
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

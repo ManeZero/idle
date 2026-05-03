@@ -8,6 +8,7 @@ import {
   CONTRACT_ENERGY,
   EXPERIENCE_PER_BARREL,
   OIL_SELL_PRICE,
+  OIL_TANK_CAPACITY,
   STARTING_CURRENCY,
   STATION_CAPACITY,
   STATION_ENERGY_CONSUMPTION,
@@ -144,7 +145,9 @@ export const useGameStore = create<GameState & GameActions>()(
           const energyOk = hasEnoughEnergy(state.contracts, state.stations);
           const result = extractOil(state.stations, energyOk, deltaSeconds, mods);
           state.stations = result.stations;
-          state.oil += result.extracted;
+          // Резервуар имеет лимит. Излишки добычи теряются (станции качают,
+          // но нефть некуда сливать) — стимулирует игрока продавать.
+          state.oil = Math.min(OIL_TANK_CAPACITY, state.oil + result.extracted);
 
           if (mods.autosellEnabled) tickAutosell(state, deltaSeconds);
         });
