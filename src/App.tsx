@@ -1,5 +1,6 @@
 import { EnergyPanel } from "@/components/EnergyPanel";
 import { OilStationCard } from "@/components/OilStationCard";
+import { ResearchPanel } from "@/components/ResearchPanel";
 import { ResourceDisplay } from "@/components/ResourceDisplay";
 import { ShopPanel } from "@/components/ShopPanel";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -38,6 +39,10 @@ function App() {
         <section className="panel">
           <h2 className="panel-title">Энергия</h2>
           <EnergyPanel />
+        </section>
+        <section className="panel">
+          <h2 className="panel-title">Исследования</h2>
+          <ResearchPanel />
         </section>
       </div>
     </div>

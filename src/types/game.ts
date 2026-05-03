@@ -10,6 +10,7 @@ export interface OilStation {
 export interface EnergyContract {
   id: number;
   energyProvided: number;
+  timeRemaining: number;
 }
 
 export interface GameState {
@@ -17,9 +18,11 @@ export interface GameState {
   oil: number;
   stations: OilStation[];
   contracts: EnergyContract[];
-  contractTime: number;
   nextId: number;
   paused: boolean;
+  experience: number;
+  completedResearch: number[];
+  autosellTimer: number;
 }
 
 export interface GameActions {
@@ -30,4 +33,5 @@ export interface GameActions {
   buyContract: () => void;
   sellOil: (fraction: number) => void;
   togglePause: () => void;
+  buyResearch: (id: number) => void;
 }

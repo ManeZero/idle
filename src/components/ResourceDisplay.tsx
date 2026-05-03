@@ -5,6 +5,7 @@ import { formatNumber } from "@/utils/formatNumber";
 export function ResourceDisplay() {
   const currency = useGameStore((state) => state.currency);
   const oil = useGameStore((state) => state.oil);
+  const experience = useGameStore((state) => state.experience);
   const stations = useGameStore((state) => state.stations);
   const contracts = useGameStore((state) => state.contracts);
   const sellOil = useGameStore((state) => state.sellOil);
@@ -33,6 +34,10 @@ export function ResourceDisplay() {
             Продать 100%
           </button>
         </div>
+      </div>
+      <div className="resource-row">
+        <span className="resource-label">Опыт</span>
+        <span className="resource-value">{formatNumber(experience)}</span>
       </div>
       <div className={`resource-row${energyShortage ? " resource-row--danger" : ""}`}>
         <span className="resource-label">Энергия</span>

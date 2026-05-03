@@ -5,18 +5,20 @@ import { useGameStore } from "@/stores/gameStore";
 import type { EnergyContract, OilStation } from "@/types/game";
 import { ShopPanel } from "./ShopPanel";
 
-const makeStation = (id: number): OilStation => ({
+const makeStation = (id: number, overrides: Partial<OilStation> = {}): OilStation => ({
   id,
   oilRemaining: 10_000,
   capacity: 10_000,
   energyConsumption: 10,
   enabled: true,
   purchasePrice: 500,
+  ...overrides,
 });
 
 const makeContract = (id: number): EnergyContract => ({
   id,
   energyProvided: 10,
+  timeRemaining: 100,
 });
 
 const reset = (overrides = {}) => {
@@ -26,9 +28,11 @@ const reset = (overrides = {}) => {
     oil: 0,
     stations: [],
     contracts: [],
-    contractTime: 0,
     nextId: 1,
     paused: false,
+    experience: 0,
+    completedResearch: [],
+    autosellTimer: 0,
     ...overrides,
   });
 };
@@ -57,30 +61,36 @@ describe("ShopPanel", () => {
   });
 
   it("station buy button disabled when slot limit reached", () => {
-    const stations = [1, 2, 3, 4, 5].map(makeStation);
+    const stations = [1, 2, 3, 4, 5].map((id) => makeStation(id));
     reset({ currency: 1_000, stations });
     render(<ShopPanel />);
     expect(screen.getByText(/Купить — 500/)).toBeDisabled();
   });
 
-  it("contract cost escalates with active contracts", () => {
-    reset({ currency: 1_000, contracts: [makeContract(1)], contractTime: 100 });
-    render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 110/)).toBeInTheDocument();
-  });
-
-  it("buying contract deducts correct cost", async () => {
+  it("contract buy button disabled when no enabled stations", () => {
     reset({ currency: 1_000 });
     render(<ShopPanel />);
+    expect(screen.getByText(/Купить — 100/)).toBeDisabled();
+  });
+
+  it("contract cost scales with enabled stations", () => {
+    const stations = [makeStation(1), makeStation(2), makeStation(3)];
+    reset({ currency: 1_000, stations });
+    render(<ShopPanel />);
+    expect(screen.getByText(/Купить — 180/)).toBeInTheDocument();
+  });
+
+  it("buying contract creates contract with matching energy", async () => {
+    reset({ currency: 1_000, stations: [makeStation(1)] });
+    render(<ShopPanel />);
     await userEvent.click(screen.getByText(/Купить — 100/));
-    expect(useGameStore.getState().contracts).toHaveLength(1);
+    expect(useGameStore.getState().contracts[0]?.energyProvided).toBe(10);
     expect(useGameStore.getState().currency).toBe(900);
   });
 
   it("contract buy button disabled when slot limit reached", () => {
-    const contracts = [1, 2, 3, 4, 5].map(makeContract);
-    reset({ currency: 1_000, contracts, contractTime: 100 });
+    reset({ currency: 1_000, stations: [makeStation(1)], contracts: [makeContract(1)] });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 150/)).toBeDisabled();
+    expect(screen.getByText(/Купить — 100/)).toBeDisabled();
   });
 });

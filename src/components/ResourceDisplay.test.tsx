@@ -13,9 +13,11 @@ const makeStation = (enabled: boolean, id = 1): OilStation => ({
   enabled,
   purchasePrice: 500,
 });
+
 const makeContract = (id = 1): EnergyContract => ({
   id,
   energyProvided: 10,
+  timeRemaining: 100,
 });
 
 const reset = (overrides = {}) => {
@@ -27,6 +29,9 @@ const reset = (overrides = {}) => {
     contracts: [],
     nextId: 1,
     paused: false,
+    experience: 0,
+    completedResearch: [],
+    autosellTimer: 0,
     ...overrides,
   });
 };
@@ -44,6 +49,12 @@ describe("ResourceDisplay", () => {
     reset({ oil: 500 });
     render(<ResourceDisplay />);
     expect(screen.getByText("500.0")).toBeInTheDocument();
+  });
+
+  it("shows experience", () => {
+    reset({ experience: 42 });
+    render(<ResourceDisplay />);
+    expect(screen.getByText("42.0")).toBeInTheDocument();
   });
 
   it("shows energy supply and demand", () => {

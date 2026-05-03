@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { CONTRACT_DURATION } from "@/constants/game";
+import { CONTRACT_DURATION, EXPERIENCE_PER_BARREL } from "@/constants/game";
 import type { EnergyContract, OilStation } from "@/types/game";
 import { useGameStore } from "./gameStore";
 
@@ -16,6 +16,7 @@ const makeStation = (overrides: Partial<OilStation> = {}): OilStation => ({
 const makeContract = (overrides: Partial<EnergyContract> = {}): EnergyContract => ({
   id: 1,
   energyProvided: 10,
+  timeRemaining: 100,
   ...overrides,
 });
 
@@ -26,9 +27,11 @@ const reset = (overrides: Partial<Parameters<typeof useGameStore.setState>[0]> =
     oil: 0,
     stations: [],
     contracts: [],
-    contractTime: 0,
     nextId: 1,
     paused: false,
+    experience: 0,
+    completedResearch: [],
+    autosellTimer: 0,
     ...overrides,
   });
 };
@@ -40,29 +43,25 @@ describe("initial state", () => {
     expect(useGameStore.getInitialState().currency).toBe(1_000);
   });
 
-  it("starts with 0 oil, empty stations, contracts and contractTime", () => {
+  it("starts with 0 oil, empty stations and contracts, 0 experience", () => {
     const s = useGameStore.getInitialState();
     expect(s.oil).toBe(0);
     expect(s.stations).toHaveLength(0);
     expect(s.contracts).toHaveLength(0);
-    expect(s.contractTime).toBe(0);
+    expect(s.experience).toBe(0);
+    expect(s.completedResearch).toHaveLength(0);
   });
 });
 
 describe("tick", () => {
   it("does nothing when paused", () => {
-    reset({
-      stations: [makeStation()],
-      contracts: [makeContract()],
-      contractTime: 100,
-      paused: true,
-    });
+    reset({ stations: [makeStation()], contracts: [makeContract()], paused: true });
     useGameStore.getState().tick(1);
     expect(useGameStore.getState().oil).toBe(0);
   });
 
   it("extracts oil when energy is sufficient", () => {
-    reset({ stations: [makeStation()], contracts: [makeContract()], contractTime: 100 });
+    reset({ stations: [makeStation()], contracts: [makeContract()] });
     useGameStore.getState().tick(1);
     expect(useGameStore.getState().oil).toBeGreaterThan(0);
   });
@@ -74,22 +73,28 @@ describe("tick", () => {
   });
 
   it("reduces oilRemaining after extraction", () => {
-    reset({ stations: [makeStation()], contracts: [makeContract()], contractTime: 100 });
+    reset({ stations: [makeStation()], contracts: [makeContract()] });
     useGameStore.getState().tick(1);
     expect(useGameStore.getState().stations[0]?.oilRemaining).toBeLessThan(10_000);
   });
 
-  it("clears contracts and resets contractTime when timer expires", () => {
-    reset({ contracts: [makeContract()], contractTime: 0.05 });
+  it("removes expired contracts", () => {
+    reset({ contracts: [makeContract({ timeRemaining: 0.05 })] });
     useGameStore.getState().tick(0.1);
     expect(useGameStore.getState().contracts).toHaveLength(0);
-    expect(useGameStore.getState().contractTime).toBe(0);
   });
 
-  it("decrements contractTime each tick", () => {
-    reset({ contracts: [makeContract()], contractTime: 100 });
+  it("decrements contract timeRemaining each tick", () => {
+    reset({ contracts: [makeContract({ timeRemaining: 100 })] });
     useGameStore.getState().tick(1);
-    expect(useGameStore.getState().contractTime).toBeCloseTo(99);
+    expect(useGameStore.getState().contracts[0]?.timeRemaining).toBeCloseTo(99);
+  });
+
+  it("autosell triggers after interval when research #8 complete", () => {
+    reset({ oil: 1_000, completedResearch: [8] });
+    useGameStore.getState().tick(30);
+    expect(useGameStore.getState().oil).toBeLessThan(1_000);
+    expect(useGameStore.getState().experience).toBeGreaterThan(0);
   });
 });
 
@@ -154,52 +159,47 @@ describe("toggleOilStation", () => {
 });
 
 describe("buyContract", () => {
-  it("does nothing when not enough currency", () => {
-    reset({ currency: 99 });
+  it("does nothing when no enabled stations", () => {
+    reset({ currency: 1_000 });
     useGameStore.getState().buyContract();
     expect(useGameStore.getState().contracts).toHaveLength(0);
   });
 
-  it("1st contract costs 100 currency", () => {
-    reset({ currency: 1_000 });
+  it("does nothing when not enough currency", () => {
+    reset({ currency: 99, stations: [makeStation()] });
     useGameStore.getState().buyContract();
-    expect(useGameStore.getState().contracts).toHaveLength(1);
+    expect(useGameStore.getState().contracts).toHaveLength(0);
+  });
+
+  it("creates contract with energy matching enabled stations", () => {
+    reset({ currency: 1_000, stations: [makeStation({ id: 1 }), makeStation({ id: 2 })] });
+    useGameStore.getState().buyContract();
+    expect(useGameStore.getState().contracts[0]?.energyProvided).toBe(20);
+  });
+
+  it("costs 100 with 1 enabled station", () => {
+    reset({ currency: 1_000, stations: [makeStation()] });
+    useGameStore.getState().buyContract();
     expect(useGameStore.getState().currency).toBe(900);
   });
 
-  it("sets contractTime to CONTRACT_DURATION on first buy", () => {
-    reset({ currency: 1_000 });
+  it("costs 180 with 3 enabled stations", () => {
+    const stations = [1, 2, 3].map((id) => makeStation({ id }));
+    reset({ currency: 1_000, stations });
     useGameStore.getState().buyContract();
-    expect(useGameStore.getState().contractTime).toBe(CONTRACT_DURATION);
+    expect(useGameStore.getState().currency).toBe(820);
   });
 
-  it("adds CONTRACT_DURATION to contractTime on second buy", () => {
-    reset({ currency: 1_000, contracts: [makeContract()], contractTime: CONTRACT_DURATION });
+  it("sets timeRemaining to CONTRACT_DURATION", () => {
+    reset({ currency: 1_000, stations: [makeStation()] });
     useGameStore.getState().buyContract();
-    expect(useGameStore.getState().contractTime).toBe(CONTRACT_DURATION * 2);
-  });
-
-  it("2nd contract costs 110 currency", () => {
-    reset({ currency: 1_000, contracts: [makeContract()], contractTime: 100 });
-    useGameStore.getState().buyContract();
-    expect(useGameStore.getState().currency).toBe(890);
-  });
-
-  it("3rd contract costs 120 currency", () => {
-    reset({
-      currency: 1_000,
-      contracts: [makeContract({ id: 1 }), makeContract({ id: 2 })],
-      contractTime: 100,
-    });
-    useGameStore.getState().buyContract();
-    expect(useGameStore.getState().currency).toBe(880);
+    expect(useGameStore.getState().contracts[0]?.timeRemaining).toBe(CONTRACT_DURATION);
   });
 
   it("does not buy contract when slot limit is reached", () => {
-    const contracts = [1, 2, 3, 4, 5].map((id) => makeContract({ id }));
-    reset({ currency: 1_000, contracts, contractTime: 100 });
+    reset({ currency: 1_000, stations: [makeStation()], contracts: [makeContract()] });
     useGameStore.getState().buyContract();
-    expect(useGameStore.getState().contracts).toHaveLength(5);
+    expect(useGameStore.getState().contracts).toHaveLength(1);
     expect(useGameStore.getState().currency).toBe(1_000);
   });
 });
@@ -212,18 +212,46 @@ describe("sellOil", () => {
     expect(useGameStore.getState().currency).toBeCloseTo(100);
   });
 
-  it("sells 50% of oil", () => {
-    reset({ oil: 1_000 });
-    useGameStore.getState().sellOil(0.5);
-    expect(useGameStore.getState().oil).toBeCloseTo(500);
-    expect(useGameStore.getState().currency).toBeCloseTo(500);
-  });
-
-  it("sells 100% of oil", () => {
+  it("earns experience proportional to barrels sold", () => {
     reset({ oil: 1_000 });
     useGameStore.getState().sellOil(1);
-    expect(useGameStore.getState().oil).toBeCloseTo(0);
-    expect(useGameStore.getState().currency).toBeCloseTo(1_000);
+    expect(useGameStore.getState().experience).toBeCloseTo(1_000 * EXPERIENCE_PER_BARREL);
+  });
+});
+
+describe("buyResearch", () => {
+  it("does nothing when not enough experience", () => {
+    reset({ experience: 99 });
+    useGameStore.getState().buyResearch(1);
+    expect(useGameStore.getState().completedResearch).toHaveLength(0);
+  });
+
+  it("does nothing when prerequisites not met", () => {
+    reset({ experience: 1_000 });
+    useGameStore.getState().buyResearch(3);
+    expect(useGameStore.getState().completedResearch).toHaveLength(0);
+  });
+
+  it("does nothing when already completed", () => {
+    reset({ experience: 1_000, completedResearch: [1] });
+    useGameStore.getState().buyResearch(1);
+    expect(useGameStore.getState().completedResearch).toHaveLength(1);
+    expect(useGameStore.getState().experience).toBe(1_000);
+  });
+
+  it("deducts experience and adds to completedResearch", () => {
+    reset({ experience: 100 });
+    useGameStore.getState().buyResearch(1);
+    expect(useGameStore.getState().completedResearch).toContain(1);
+    expect(useGameStore.getState().experience).toBe(0);
+  });
+
+  it("research #3 updates capacity of existing stations", () => {
+    const station = makeStation({ capacity: 10_000, oilRemaining: 5_000 });
+    reset({ experience: 1_000, stations: [station], completedResearch: [1] });
+    useGameStore.getState().buyResearch(3);
+    expect(useGameStore.getState().stations[0]?.capacity).toBe(15_000);
+    expect(useGameStore.getState().stations[0]?.oilRemaining).toBe(5_000);
   });
 });
 

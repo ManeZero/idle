@@ -1,5 +1,5 @@
-import { CONTRACT_BASE_COST, CONTRACT_COST_INCREMENT } from "@/constants/game";
+import { CONTRACT_BASE_COST, CONTRACT_COST_PER_STATION } from "@/constants/game";
 
-export function calcContractCost(activeCount: number): number {
-  return CONTRACT_BASE_COST + activeCount * CONTRACT_COST_INCREMENT;
+export function calcContractCost(enabledCount: number): number {
+  return CONTRACT_BASE_COST + Math.max(0, enabledCount - 1) * CONTRACT_COST_PER_STATION;
 }

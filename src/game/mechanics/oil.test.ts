@@ -31,6 +31,23 @@ describe("calcOilProductionRate", () => {
   });
 });
 
+describe("calcOilProductionRate with mods", () => {
+  it("applies production rate multiplier", () => {
+    const mods = { productionRateMultiplier: 1.25, minProductionFloor: 0 };
+    expect(calcOilProductionRate(makeStation(10_000), mods)).toBe(12.5);
+  });
+
+  it("applies min production floor at low fill", () => {
+    const mods = { productionRateMultiplier: 1, minProductionFloor: 1.5 };
+    expect(calcOilProductionRate(makeStation(0), mods)).toBe(1.5);
+  });
+
+  it("does not apply floor when base rate is higher", () => {
+    const mods = { productionRateMultiplier: 1, minProductionFloor: 1.5 };
+    expect(calcOilProductionRate(makeStation(10_000), mods)).toBe(10);
+  });
+});
+
 describe("calcStationSellValue", () => {
   it("returns 60% of purchase price", () => {
     expect(calcStationSellValue(makeStation(5_000))).toBe(300);

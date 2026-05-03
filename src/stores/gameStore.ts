@@ -2,10 +2,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import {
+  AUTOSELL_INTERVAL_SECONDS,
+  AUTOSELL_PERCENT,
   CONTRACT_DURATION,
   CONTRACT_ENERGY,
-  MAX_CONTRACT_SLOTS,
-  MAX_STATION_SLOTS,
+  EXPERIENCE_PER_BARREL,
   OIL_SELL_PRICE,
   STARTING_CURRENCY,
   STATION_CAPACITY,
@@ -16,6 +17,7 @@ import {
 import { calcContractCost } from "@/game/mechanics/contracts";
 import { hasEnoughEnergy } from "@/game/mechanics/energy";
 import { calcOilProductionRate, calcStationSellValue } from "@/game/mechanics/oil";
+import { getResearchModifiers, RESEARCH_DEFS } from "@/game/mechanics/research";
 import type { EnergyContract, GameActions, GameState, OilStation } from "@/types/game";
 
 function readFromStorage(): Partial<GameState> {
@@ -33,12 +35,13 @@ function extractOil(
   stations: OilStation[],
   energyOk: boolean,
   deltaSeconds: number,
+  mods: { productionRateMultiplier: number; minProductionFloor: number },
 ): { stations: OilStation[]; extracted: number } {
   if (!energyOk) return { stations, extracted: 0 };
   let extracted = 0;
   const updated = stations.map((s) => {
     if (!s.enabled) return s;
-    const rate = calcOilProductionRate(s);
+    const rate = calcOilProductionRate(s, mods);
     const amount = Math.min(rate * deltaSeconds, s.oilRemaining);
     extracted += amount;
     return { ...s, oilRemaining: s.oilRemaining - amount };
@@ -46,15 +49,23 @@ function extractOil(
   return { stations: updated, extracted };
 }
 
-function tickContractTime(
-  contracts: EnergyContract[],
-  contractTime: number,
+function advanceContracts(contracts: EnergyContract[], deltaSeconds: number): EnergyContract[] {
+  return contracts
+    .map((c) => ({ ...c, timeRemaining: c.timeRemaining - deltaSeconds }))
+    .filter((c) => c.timeRemaining > 0);
+}
+
+function tickAutosell(
+  state: { oil: number; currency: number; experience: number; autosellTimer: number },
   deltaSeconds: number,
-): { contracts: EnergyContract[]; contractTime: number } {
-  if (contracts.length === 0) return { contracts, contractTime };
-  const next = contractTime - deltaSeconds;
-  if (next <= 0) return { contracts: [], contractTime: 0 };
-  return { contracts, contractTime: next };
+): void {
+  state.autosellTimer += deltaSeconds;
+  if (state.autosellTimer < AUTOSELL_INTERVAL_SECONDS) return;
+  state.autosellTimer -= AUTOSELL_INTERVAL_SECONDS;
+  const amount = state.oil * AUTOSELL_PERCENT;
+  state.oil -= amount;
+  state.currency += Math.floor(amount * OIL_SELL_PRICE);
+  state.experience += amount * EXPERIENCE_PER_BARREL;
 }
 
 export const useGameStore = create<GameState & GameActions>()(
@@ -64,9 +75,11 @@ export const useGameStore = create<GameState & GameActions>()(
       oil: 0,
       stations: [],
       contracts: [],
-      contractTime: 0,
       nextId: 1,
       paused: false,
+      experience: 0,
+      completedResearch: [],
+      autosellTimer: 0,
 
       tick(deltaSeconds) {
         if (get().paused) return;
@@ -76,32 +89,36 @@ export const useGameStore = create<GameState & GameActions>()(
           state.oil = saved.oil ?? state.oil;
           state.stations = saved.stations ?? state.stations;
           state.contracts = saved.contracts ?? state.contracts;
-          state.contractTime = saved.contractTime ?? state.contractTime;
           state.nextId = saved.nextId ?? state.nextId;
+          state.experience = saved.experience ?? state.experience;
+          state.completedResearch = saved.completedResearch ?? state.completedResearch;
 
+          const mods = getResearchModifiers(state.completedResearch);
           const energyOk = hasEnoughEnergy(state.contracts, state.stations);
-          const result = extractOil(state.stations, energyOk, deltaSeconds);
+          const result = extractOil(state.stations, energyOk, deltaSeconds, mods);
           state.stations = result.stations;
           state.oil += result.extracted;
 
           if (state.contracts.length > 0) {
-            const ct = tickContractTime(state.contracts, state.contractTime, deltaSeconds);
-            state.contracts = ct.contracts;
-            state.contractTime = ct.contractTime;
+            state.contracts = advanceContracts(state.contracts, deltaSeconds);
           }
+
+          if (mods.autosellEnabled) tickAutosell(state, deltaSeconds);
         });
       },
 
       buyOilStation() {
-        const { currency, stations, nextId } = get();
+        const { currency, stations, nextId, completedResearch } = get();
+        const mods = getResearchModifiers(completedResearch);
         if (currency < STATION_PRICE) return;
-        if (stations.length >= MAX_STATION_SLOTS) return;
+        if (stations.length >= mods.maxStationSlots) return;
+        const capacity = Math.floor(STATION_CAPACITY * mods.stationCapacityMultiplier);
         set((state) => {
           state.currency -= STATION_PRICE;
           state.stations.push({
             id: nextId,
-            oilRemaining: STATION_CAPACITY,
-            capacity: STATION_CAPACITY,
+            oilRemaining: capacity,
+            capacity,
             energyConsumption: STATION_ENERGY_CONSUMPTION,
             enabled: true,
             purchasePrice: STATION_PRICE,
@@ -127,14 +144,21 @@ export const useGameStore = create<GameState & GameActions>()(
       },
 
       buyContract() {
-        const { currency, contracts, nextId } = get();
-        const cost = calcContractCost(contracts.length);
+        const { currency, stations, contracts, nextId, completedResearch } = get();
+        const mods = getResearchModifiers(completedResearch);
+        const enabledCount = stations.filter((s) => s.enabled).length;
+        if (enabledCount === 0) return;
+        const cost = Math.floor(calcContractCost(enabledCount) * mods.contractCostMultiplier);
         if (currency < cost) return;
-        if (contracts.length >= MAX_CONTRACT_SLOTS) return;
+        if (contracts.length >= mods.maxContractSlots) return;
+        const duration = Math.round(CONTRACT_DURATION * mods.contractDurationMultiplier);
         set((state) => {
           state.currency -= cost;
-          state.contracts.push({ id: nextId, energyProvided: CONTRACT_ENERGY });
-          state.contractTime += CONTRACT_DURATION;
+          state.contracts.push({
+            id: nextId,
+            energyProvided: enabledCount * CONTRACT_ENERGY,
+            timeRemaining: duration,
+          });
           state.nextId += 1;
         });
       },
@@ -145,6 +169,26 @@ export const useGameStore = create<GameState & GameActions>()(
         set((state) => {
           state.oil -= amount;
           state.currency += amount * OIL_SELL_PRICE;
+          state.experience += amount * EXPERIENCE_PER_BARREL;
+        });
+      },
+
+      buyResearch(id) {
+        const { experience, completedResearch } = get();
+        const def = RESEARCH_DEFS.find((r) => r.id === id);
+        if (!def) return;
+        if (completedResearch.includes(id)) return;
+        if (!def.requires.every((req) => completedResearch.includes(req))) return;
+        if (experience < def.cost) return;
+        set((state) => {
+          state.experience -= def.cost;
+          state.completedResearch.push(id);
+          if (id === 3) {
+            const newCapacity = Math.floor(STATION_CAPACITY * 1.5);
+            for (const s of state.stations) {
+              s.capacity = newCapacity;
+            }
+          }
         });
       },
 
@@ -161,8 +205,9 @@ export const useGameStore = create<GameState & GameActions>()(
         oil: state.oil,
         stations: state.stations,
         contracts: state.contracts,
-        contractTime: state.contractTime,
         nextId: state.nextId,
+        experience: state.experience,
+        completedResearch: state.completedResearch,
       }),
     },
   ),

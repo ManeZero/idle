@@ -24,6 +24,9 @@ const reset = (overrides = {}) => {
     contracts: [],
     nextId: 1,
     paused: false,
+    experience: 0,
+    completedResearch: [],
+    autosellTimer: 0,
     ...overrides,
   });
 };

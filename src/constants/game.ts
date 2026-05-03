@@ -14,7 +14,11 @@ export const OIL_SELL_PRICE = 1;
 export const CONTRACT_ENERGY = 10;
 export const CONTRACT_DURATION = 100;
 export const CONTRACT_BASE_COST = 100;
-export const CONTRACT_COST_INCREMENT = 10;
+export const CONTRACT_COST_PER_STATION = 40;
 
 export const MAX_STATION_SLOTS = 5;
-export const MAX_CONTRACT_SLOTS = 5;
+export const MAX_CONTRACT_SLOTS = 1;
+
+export const EXPERIENCE_PER_BARREL = 0.1;
+export const AUTOSELL_INTERVAL_SECONDS = 30;
+export const AUTOSELL_PERCENT = 0.08;

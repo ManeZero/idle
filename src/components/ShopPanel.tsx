@@ -1,5 +1,6 @@
-import { MAX_CONTRACT_SLOTS, MAX_STATION_SLOTS, STATION_PRICE } from "@/constants/game";
+import { CONTRACT_DURATION, CONTRACT_ENERGY, STATION_PRICE } from "@/constants/game";
 import { calcContractCost } from "@/game/mechanics/contracts";
+import { getResearchModifiers } from "@/game/mechanics/research";
 import { useGameStore } from "@/stores/gameStore";
 import { formatNumber } from "@/utils/formatNumber";
 
@@ -7,10 +8,15 @@ export function ShopPanel() {
   const currency = useGameStore((state) => state.currency);
   const stations = useGameStore((state) => state.stations);
   const contracts = useGameStore((state) => state.contracts);
+  const completedResearch = useGameStore((state) => state.completedResearch);
   const buyOilStation = useGameStore((state) => state.buyOilStation);
   const buyContract = useGameStore((state) => state.buyContract);
 
-  const contractCost = calcContractCost(contracts.length);
+  const mods = getResearchModifiers(completedResearch);
+  const enabledCount = stations.filter((s) => s.enabled).length;
+  const contractCost = Math.floor(calcContractCost(enabledCount) * mods.contractCostMultiplier);
+  const contractMW = enabledCount * CONTRACT_ENERGY;
+  const contractDuration = Math.round(CONTRACT_DURATION * mods.contractDurationMultiplier);
 
   return (
     <div className="shop-panel">
@@ -19,12 +25,12 @@ export function ShopPanel() {
           <span className="generator-name">Нефтяная станция</span>
           <span className="generator-production">10 барр./сек · 10 МВт</span>
           <span className="generator-count">
-            Станции ({stations.length}/{MAX_STATION_SLOTS})
+            Станции ({stations.length}/{mods.maxStationSlots})
           </span>
         </div>
         <button
           className="buy-button"
-          disabled={currency < STATION_PRICE || stations.length >= MAX_STATION_SLOTS}
+          disabled={currency < STATION_PRICE || stations.length >= mods.maxStationSlots}
           onClick={buyOilStation}
           type="button"
         >
@@ -34,14 +40,20 @@ export function ShopPanel() {
       <div className="generator-card">
         <div className="generator-info">
           <span className="generator-name">Энергоконтракт</span>
-          <span className="generator-production">+10 МВт · +100 сек</span>
+          <span className="generator-production">
+            {contractMW} МВт · {contractDuration} сек
+          </span>
           <span className="generator-count">
-            Контракты ({contracts.length}/{MAX_CONTRACT_SLOTS})
+            Контракты ({contracts.length}/{mods.maxContractSlots})
           </span>
         </div>
         <button
           className="buy-button"
-          disabled={currency < contractCost || contracts.length >= MAX_CONTRACT_SLOTS}
+          disabled={
+            enabledCount === 0 ||
+            currency < contractCost ||
+            contracts.length >= mods.maxContractSlots
+          }
           onClick={buyContract}
           type="button"
         >
