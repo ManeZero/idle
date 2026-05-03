@@ -93,7 +93,7 @@
   position: relative;
   font-family: var(--font-ui);
   display: grid;
-  grid-template-rows: 56px 1fr 160px;
+  grid-template-rows: 56px minmax(0, 1fr) 160px;
   overflow: hidden;
 }
 
@@ -179,13 +179,19 @@
 /* ── Main: схема + sidebar ── */
 .bp-desktop__main {
   display: grid;
-  grid-template-columns: 1fr 440px;
+  grid-template-columns: minmax(0, 1fr) 440px;
   overflow: hidden;
+  min-height: 0;
 }
 .bp-desktop__field {
   position: relative;
   overflow: hidden;
   padding: 8px;
+  min-height: 0;
+}
+.bp-desktop__field > svg {
+  max-height: 100%;
+  max-width: 100%;
 }
 .bp-desktop__sidebar {
   border-left: 1px solid var(--bp-line);
@@ -193,6 +199,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 /* ── Bottom bar ── */
