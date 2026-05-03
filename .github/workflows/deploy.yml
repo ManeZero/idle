@@ -18,6 +18,11 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# Принудительно используем Node.js 24 в самих actions — Node 20 устарел
+# (см. предупреждение CI про deprecation от GitHub)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,6 +47,10 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          # Автоматически включает Pages в репо если ещё не включены
+          # (требует pages: write permission, что у нас есть)
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
