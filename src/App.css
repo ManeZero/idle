@@ -2,37 +2,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  padding: 2rem;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 
 /* ── Ресурсы ─────────────────────────────────── */
 
 .resource-display {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.25rem;
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--code-bg);
 }
 
 .resource-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .resource-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text);
-  min-width: 60px;
 }
 
 .resource-value {
   font-weight: bold;
   color: var(--text-h);
-  min-width: 80px;
+  font-size: 0.85rem;
 }
 
 .resource-row--danger .resource-value {
@@ -41,15 +45,45 @@
 
 .sell-buttons {
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+/* ── Вкладки ─────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: 900px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 0.35rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &.tab--active {
+    border-color: var(--border);
+    background: var(--code-bg);
+    color: var(--text-h);
+    margin-bottom: -1px;
+  }
 }
 
 /* ── Колонки ─────────────────────────────────── */
 
 .game-columns {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: flex-start;
   flex-wrap: wrap;
   width: 100%;
@@ -59,20 +93,26 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  flex: 1 1 280px;
+  gap: 0.5rem;
+  flex: 1 1 240px;
+}
+
+.panel--wide {
+  flex: 1 1 600px;
 }
 
 .panel-title {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--text);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .shop-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 /* ── Карточки ────────────────────────────────── */
@@ -81,11 +121,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--code-bg);
-  gap: 1rem;
+  gap: 0.75rem;
 
   &.generator-card--disabled {
     opacity: 0.6;
@@ -95,16 +135,16 @@
 .generator-info {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   min-width: 0;
   flex: 1;
 }
 
 .station-bar {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
   margin: 0.1rem 0;
 }
@@ -112,42 +152,42 @@
 .station-bar-fill {
   height: 100%;
   background: var(--accent-border);
-  border-radius: 3px;
+  border-radius: 2px;
   transition: width 0.1s linear;
 }
 
 .generator-name {
   font-weight: bold;
   color: var(--text-h);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .generator-count {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text);
 }
 
 .generator-production {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--accent);
 }
 
 .card-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.3rem;
   flex-shrink: 0;
 }
 
 /* ── Кнопки ──────────────────────────────────── */
 
 .buy-button {
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.75rem;
   border: 1px solid var(--accent-border);
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--accent-bg);
   color: var(--text-h);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   white-space: nowrap;
   transition: opacity 0.15s;
 
@@ -158,13 +198,13 @@
 }
 
 .sell-button {
-  padding: 0.35rem 0.7rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: var(--text);
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   transition: opacity 0.15s;
 
@@ -175,13 +215,13 @@
 }
 
 .toggle-button {
-  padding: 0.35rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: var(--text);
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   transition:
     background 0.15s,
@@ -197,15 +237,15 @@
 
 .pause-button {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.4rem 0.9rem;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.3rem 0.7rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--code-bg);
   color: var(--text);
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   transition:
     background 0.15s,
