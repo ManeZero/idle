@@ -1,17 +1,29 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import {
+  CONTRACT_BASE_COST,
+  CONTRACT_COST_PER_STATION,
+  STATION_CAPACITY,
+  STATION_ENERGY_CONSUMPTION,
+  STATION_PRICE,
+} from "@/constants/game";
 import { useGameStore } from "@/stores/gameStore";
 import type { EnergyContract, OilStation } from "@/types/game";
+import { formatNumber } from "@/utils/formatNumber";
 import { ShopPanel } from "./ShopPanel";
+
+const stationLabel = new RegExp(`Купить — ${formatNumber(STATION_PRICE, 0)}`);
+const contractCostLabel = (n: number) => new RegExp(`Купить — ${formatNumber(n, 0)}`);
+const upgradeContractLabel = (n: number) => new RegExp(`Обновить — ${formatNumber(n, 0)}`);
 
 const makeStation = (id: number, overrides: Partial<OilStation> = {}): OilStation => ({
   id,
-  oilRemaining: 10_000,
-  capacity: 10_000,
-  energyConsumption: 10,
+  oilRemaining: STATION_CAPACITY,
+  capacity: STATION_CAPACITY,
+  energyConsumption: STATION_ENERGY_CONSUMPTION,
   enabled: true,
-  purchasePrice: 500,
+  purchasePrice: STATION_PRICE,
   ...overrides,
 });
 
@@ -41,55 +53,56 @@ beforeEach(() => reset());
 
 describe("ShopPanel", () => {
   it("station buy button disabled when not enough currency", () => {
-    reset({ currency: 499 });
+    reset({ currency: STATION_PRICE - 1 });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 500/)).toBeDisabled();
+    expect(screen.getByText(stationLabel)).toBeDisabled();
   });
 
   it("station buy button enabled when enough currency", () => {
-    reset({ currency: 500 });
+    reset({ currency: STATION_PRICE });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 500/)).toBeEnabled();
+    expect(screen.getByText(stationLabel)).toBeEnabled();
   });
 
-  it("buying station deducts 500 currency", async () => {
-    reset({ currency: 1_000 });
+  it("buying station deducts STATION_PRICE", async () => {
+    reset({ currency: STATION_PRICE * 2 });
     render(<ShopPanel />);
-    await userEvent.click(screen.getByText(/Купить — 500/));
+    await userEvent.click(screen.getByText(stationLabel));
     expect(useGameStore.getState().stations).toHaveLength(1);
-    expect(useGameStore.getState().currency).toBe(500);
+    expect(useGameStore.getState().currency).toBe(STATION_PRICE);
   });
 
   it("station buy button disabled when slot limit reached", () => {
     const stations = [1, 2, 3, 4, 5].map((id) => makeStation(id));
-    reset({ currency: 1_000, stations });
+    reset({ currency: STATION_PRICE * 2, stations });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 500/)).toBeDisabled();
+    expect(screen.getByText(stationLabel)).toBeDisabled();
   });
 
   it("contract buy button disabled when no enabled stations", () => {
-    reset({ currency: 1_000 });
+    reset({ currency: 10_000 });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 100/)).toBeDisabled();
+    expect(screen.getByText(contractCostLabel(CONTRACT_BASE_COST))).toBeDisabled();
   });
 
   it("contract cost scales with enabled stations", () => {
     const stations = [makeStation(1), makeStation(2), makeStation(3)];
-    reset({ currency: 1_000, stations });
+    reset({ currency: 10_000, stations });
     render(<ShopPanel />);
-    expect(screen.getByText(/Купить — 180/)).toBeInTheDocument();
+    const expected = CONTRACT_BASE_COST + 2 * CONTRACT_COST_PER_STATION;
+    expect(screen.getByText(contractCostLabel(expected))).toBeInTheDocument();
   });
 
   it("buying contract creates contract with matching energy", async () => {
-    reset({ currency: 1_000, stations: [makeStation(1)] });
+    reset({ currency: 10_000, stations: [makeStation(1)] });
     render(<ShopPanel />);
-    await userEvent.click(screen.getByText(/Купить — 100/));
+    await userEvent.click(screen.getByText(contractCostLabel(CONTRACT_BASE_COST)));
     expect(useGameStore.getState().contracts[0]?.energyProvided).toBe(10);
-    expect(useGameStore.getState().currency).toBe(900);
+    expect(useGameStore.getState().currency).toBe(10_000 - CONTRACT_BASE_COST);
   });
 
   it("contract button shows 'Активен' when contract covers all enabled stations", () => {
-    reset({ currency: 1_000, stations: [makeStation(1)], contracts: [makeContract(1)] });
+    reset({ currency: 10_000, stations: [makeStation(1)], contracts: [makeContract(1)] });
     render(<ShopPanel />);
     expect(screen.getByText("Активен")).toBeDisabled();
   });
@@ -97,8 +110,9 @@ describe("ShopPanel", () => {
   it("contract button shows 'Обновить' when contract is insufficient", () => {
     const contract = makeContract(1);
     const stations = [makeStation(1), makeStation(2)];
-    reset({ currency: 1_000, stations, contracts: [contract] });
+    reset({ currency: 10_000, stations, contracts: [contract] });
     render(<ShopPanel />);
-    expect(screen.getByText(/Обновить — 140/)).toBeEnabled();
+    const expected = CONTRACT_BASE_COST + CONTRACT_COST_PER_STATION;
+    expect(screen.getByText(upgradeContractLabel(expected))).toBeEnabled();
   });
 });

@@ -1,8 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import { RESEARCH_DEFS } from "@/game/mechanics/research";
 import { useGameStore } from "@/stores/gameStore";
+import { formatNumber } from "@/utils/formatNumber";
 import { ResearchPanel } from "./ResearchPanel";
+
+const COST = (id: number) => RESEARCH_DEFS.find((r) => r.id === id)?.cost ?? Number.NaN;
+const costLabel = (cost: number) => new RegExp(`^${formatNumber(cost, 0)} оп\\.`);
 
 const reset = (overrides = {}) => {
   localStorage.clear();
@@ -30,33 +35,33 @@ describe("ResearchPanel", () => {
   });
 
   it("buy button disabled when not enough experience", () => {
-    reset({ experience: 99 });
+    reset({ experience: COST(1) - 1 });
     render(<ResearchPanel />);
-    expect(screen.getByText(/^100 оп\./)).toBeDisabled();
+    expect(screen.getByText(costLabel(COST(1)))).toBeDisabled();
   });
 
   it("buy button enabled when enough experience and prereqs met", () => {
-    reset({ experience: 100 });
+    reset({ experience: COST(1) });
     render(<ResearchPanel />);
-    expect(screen.getByText(/^100 оп\./)).toBeEnabled();
+    expect(screen.getByText(costLabel(COST(1)))).toBeEnabled();
   });
 
   it("research #3 locked until #1 completed", () => {
-    reset({ experience: 1_000 });
+    reset({ experience: 10_000 });
     render(<ResearchPanel />);
-    expect(screen.getByText(/^300 оп\./)).toBeDisabled();
+    expect(screen.getByText(costLabel(COST(3)))).toBeDisabled();
   });
 
   it("research #3 available after #1 completed", () => {
-    reset({ experience: 1_000, completedResearch: [1] });
+    reset({ experience: 10_000, completedResearch: [1] });
     render(<ResearchPanel />);
-    expect(screen.getByText(/^300 оп\./)).toBeEnabled();
+    expect(screen.getByText(costLabel(COST(3)))).toBeEnabled();
   });
 
   it("buying research deducts experience and marks completed", async () => {
-    reset({ experience: 100 });
+    reset({ experience: COST(1) });
     render(<ResearchPanel />);
-    await userEvent.click(screen.getByText(/^100 оп\./));
+    await userEvent.click(screen.getByText(costLabel(COST(1))));
     expect(useGameStore.getState().completedResearch).toContain(1);
     expect(useGameStore.getState().experience).toBe(0);
   });
@@ -68,7 +73,7 @@ describe("ResearchPanel", () => {
   });
 
   it("shows missing prerequisite name", () => {
-    reset({ experience: 1_000 });
+    reset({ experience: 10_000 });
     render(<ResearchPanel />);
     expect(screen.getByText(/Нужно:.*Опытный бурильщик/)).toBeInTheDocument();
   });

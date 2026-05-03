@@ -1,27 +1,19 @@
+import { CONTRACT_BASE_COST, CONTRACT_COST_PER_STATION } from "@/constants/game";
 import { calcContractCost } from "./contracts";
 
 describe("calcContractCost", () => {
-  it("costs 100 with 0 enabled stations", () => {
-    expect(calcContractCost(0)).toBe(100);
+  it("equals base cost with 0 enabled stations", () => {
+    expect(calcContractCost(0)).toBe(CONTRACT_BASE_COST);
   });
 
-  it("costs 100 with 1 enabled station", () => {
-    expect(calcContractCost(1)).toBe(100);
+  it("equals base cost with 1 enabled station", () => {
+    expect(calcContractCost(1)).toBe(CONTRACT_BASE_COST);
   });
 
-  it("costs 140 with 2 enabled stations", () => {
-    expect(calcContractCost(2)).toBe(140);
-  });
-
-  it("costs 180 with 3 enabled stations", () => {
-    expect(calcContractCost(3)).toBe(180);
-  });
-
-  it("costs 220 with 4 enabled stations", () => {
-    expect(calcContractCost(4)).toBe(220);
-  });
-
-  it("costs 260 with 5 enabled stations", () => {
-    expect(calcContractCost(5)).toBe(260);
+  it("adds per-station cost for each station beyond the first", () => {
+    expect(calcContractCost(2)).toBe(CONTRACT_BASE_COST + CONTRACT_COST_PER_STATION);
+    expect(calcContractCost(3)).toBe(CONTRACT_BASE_COST + 2 * CONTRACT_COST_PER_STATION);
+    expect(calcContractCost(4)).toBe(CONTRACT_BASE_COST + 3 * CONTRACT_COST_PER_STATION);
+    expect(calcContractCost(5)).toBe(CONTRACT_BASE_COST + 4 * CONTRACT_COST_PER_STATION);
   });
 });
