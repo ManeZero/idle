@@ -59,7 +59,7 @@ export const RESEARCH_DEFS: ResearchDef[] = [
   { id: 6, name: "6-й слот станции", cost: 800, requires: [3], description: "+1 слот под станцию" },
   {
     id: 7,
-    name: "Авторенёвый контракт",
+    name: "Автопродление контракта",
     cost: 900,
     requires: [4],
     description: "Контракт продлевается автоматически",
