@@ -1,19 +1,22 @@
 import { RESEARCH_DEFS } from "@/game/mechanics/research";
 import { useGameStore } from "@/stores/gameStore";
 
+// Координаты центров карточек на SVG-canvas (W×H).
+// Карточки 140×108 с центром в (x, y); важно чтобы x-70..x+70 ∈ [0, W],
+// и чтобы по вертикали соседние ряды отстояли минимум на 108+небольшой gap.
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  1: { x: 105, y: 70 },
-  2: { x: 315, y: 70 },
-  3: { x: 105, y: 220 },
-  4: { x: 315, y: 220 },
-  5: { x: 70, y: 390 },
-  6: { x: 210, y: 390 },
-  7: { x: 350, y: 390 },
-  8: { x: 210, y: 580 },
+  1: { x: 110, y: 80 },
+  2: { x: 310, y: 80 },
+  3: { x: 110, y: 240 },
+  4: { x: 310, y: 240 },
+  5: { x: 78, y: 410 },
+  6: { x: 210, y: 410 },
+  7: { x: 342, y: 410 },
+  8: { x: 210, y: 600 },
 };
 
 const W = 420;
-const H = 760;
+const H = 720;
 
 type NodeStatus = "done" | "available" | "locked";
 
@@ -53,9 +56,9 @@ export function ResearchTree() {
                 <line
                   key={`${req}-${r.id}`}
                   x1={a.x}
-                  y1={a.y + 42}
+                  y1={a.y + 54}
                   x2={b.x}
-                  y2={b.y - 42}
+                  y2={b.y - 54}
                   stroke={linked ? "var(--bp-line)" : "rgba(110,195,230,0.3)"}
                   strokeWidth={linked ? 1.2 : 0.6}
                   strokeDasharray={linked ? "0" : "3 3"}
@@ -122,10 +125,10 @@ function ResearchCard({
     <g transform={`translate(${x} ${y})`}>
       {avail && (
         <rect
-          x="-65"
-          y="-42"
-          width="130"
-          height="84"
+          x="-70"
+          y="-54"
+          width="140"
+          height="108"
           fill="none"
           stroke="var(--bp-amber)"
           strokeWidth="0.6"
@@ -133,7 +136,7 @@ function ResearchCard({
           className="march"
         />
       )}
-      <foreignObject x="-65" y="-42" width="130" height="84">
+      <foreignObject x="-70" y="-54" width="140" height="108">
         <div className={cssClass}>
           <button
             type="button"
