@@ -89,13 +89,17 @@
    ========================================================================== */
 .bp-desktop {
   width: 100%;
+  /* Минимально необходимая высота под все три row + что-то под main.
+     При больших экранах растягивается до 100dvh, при маленьких разрешает
+     скролл (см. body { overflow-y: auto }). */
+  min-height: 100dvh;
   height: 100dvh;
   position: relative;
   font-family: var(--font-ui);
   display: grid;
-  grid-template-rows: 56px minmax(0, 1fr) 160px;
-  overflow: hidden;
+  grid-template-rows: 48px minmax(280px, 1fr) auto;
 }
+.bp-desktop__bottom { min-height: 140px; }
 
 /* ── Top bar ── */
 .bp-statusbar {
